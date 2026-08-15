@@ -1,0 +1,2312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RANCH Bakery — Owner Dashboard</title>
+<style>
+  :root{
+    --bg:#0F1117;
+    --surface:#181C25;
+    --surface2:#1F2430;
+    --surface3:#262C3A;
+    --border:#2A3040;
+    --accent:#4F8EF7;
+    --accent-dim:rgba(79,142,247,0.15);
+    --green:#2ECC71;
+    --green-dim:rgba(46,204,113,0.15);
+    --amber:#F5A623;
+    --amber-dim:rgba(245,166,35,0.15);
+    --red:#E74C3C;
+    --red-dim:rgba(231,76,60,0.15);
+    --text:#E8EAF0;
+    --text-muted:#8A91A6;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  #root{min-height:100vh;}
+  a{color:var(--accent);}
+  ::-webkit-scrollbar{width:10px;height:10px;}
+  ::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:6px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+
+  .app-shell{display:flex;min-height:100vh;}
+  .sidebar{
+    width:220px;flex-shrink:0;background:var(--surface);
+    border-right:1px solid var(--border);
+    display:flex;flex-direction:column;padding:20px 14px;
+    position:sticky;top:0;height:100vh;
+  }
+  .brand{padding:0 8px 20px 8px;border-bottom:1px solid var(--border);margin-bottom:16px;}
+  .brand-title{font-size:15px;font-weight:700;letter-spacing:0.02em;}
+  .brand-sub{font-size:11px;color:var(--text-muted);margin-top:2px;}
+  .nav-item{
+    display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;
+    font-size:13.5px;font-weight:500;color:var(--text-muted);cursor:pointer;margin-bottom:2px;
+    border:1px solid transparent;user-select:none;
+  }
+  .nav-item:hover{background:var(--surface2);color:var(--text);}
+  .nav-item.active{background:var(--accent-dim);color:var(--accent);border-color:rgba(79,142,247,0.3);}
+  .nav-badge{
+    margin-left:auto;background:var(--red);color:#fff;font-size:10.5px;font-weight:700;
+    padding:1px 6px;border-radius:20px;min-width:18px;text-align:center;
+  }
+  .conn-status{margin-top:auto;padding:10px 12px;font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:6px;}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;}
+  .dot.off{background:var(--red);}
+
+  .main{flex:1;min-width:0;padding:24px 28px 60px 28px;}
+  .page-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:8px;}
+  .page-title{font-size:20px;font-weight:700;}
+  .page-sub{font-size:12.5px;color:var(--text-muted);margin-top:3px;}
+
+  .grid{display:grid;gap:14px;}
+  .grid-4{grid-template-columns:repeat(4,1fr);}
+  .grid-3{grid-template-columns:repeat(3,1fr);}
+  .grid-2{grid-template-columns:2fr 1fr;}
+  @media (max-width:1100px){.grid-4{grid-template-columns:repeat(2,1fr);} .grid-2{grid-template-columns:1fr;}}
+  @media (max-width:640px){.grid-4,.grid-3{grid-template-columns:1fr;}}
+
+  .card{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:16px 18px;
+  }
+  .stat-card{display:flex;flex-direction:column;gap:6px;}
+  .stat-label{font-size:11.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;font-weight:600;}
+  .stat-value{font-size:26px;font-weight:700;}
+  .stat-sub{font-size:11.5px;color:var(--text-muted);}
+
+  .section-title{font-size:14px;font-weight:700;margin:0 0 12px 0;display:flex;align-items:center;justify-content:space-between;}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{
+    text-align:left;color:var(--text-muted);font-weight:600;font-size:11px;
+    text-transform:uppercase;letter-spacing:0.03em;padding:8px 10px;border-bottom:1px solid var(--border);
+  }
+  td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  tr.clickable{cursor:pointer;}
+  tr.clickable:hover{background:var(--surface2);}
+
+  .badge{
+    display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;
+    padding:3px 9px;border-radius:20px;white-space:nowrap;
+  }
+  .badge-pending{background:var(--amber-dim);color:var(--amber);}
+  .badge-confirmed{background:var(--accent-dim);color:var(--accent);}
+  .badge-baking{background:var(--amber-dim);color:var(--amber);}
+  .badge-ready{background:var(--green-dim);color:var(--green);}
+  .badge-fulfilled{background:rgba(46,204,113,0.08);color:#7fd9a4;}
+  .badge-cancelled{background:var(--red-dim);color:var(--red);}
+  .badge-muted{background:var(--surface3);color:var(--text-muted);}
+  .badge-highvalue{background:var(--red-dim);color:var(--red);}
+
+  .btn{
+    background:var(--surface3);color:var(--text);border:1px solid var(--border);
+    padding:7px 12px;border-radius:7px;font-size:12.5px;font-weight:600;cursor:pointer;
+  }
+  .btn:hover{border-color:var(--accent);}
+  .btn:disabled{opacity:0.5;cursor:not-allowed;}
+  .btn-accent{background:var(--accent);border-color:var(--accent);color:#0b1220;}
+  .btn-accent:hover{filter:brightness(1.08);}
+  .btn-green{background:var(--green);border-color:var(--green);color:#0b1220;}
+  .btn-ghost{background:transparent;border-color:var(--border);}
+  .btn-sm{padding:4px 9px;font-size:11.5px;}
+  .btn-danger{background:transparent;border-color:var(--red);color:var(--red);}
+
+  input,select,textarea{
+    background:var(--surface2);border:1px solid var(--border);color:var(--text);
+    padding:6px 9px;border-radius:6px;font-size:12.5px;font-family:inherit;
+  }
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);}
+  input[type="number"]{width:90px;}
+
+  .tabs{display:flex;gap:6px;margin-bottom:16px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+  .tab{padding:8px 4px;margin-right:14px;font-size:13px;font-weight:600;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;}
+  .tab.active{color:var(--text);border-color:var(--accent);}
+
+  .kanban{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;align-items:start;}
+  @media (max-width:1200px){.kanban{grid-template-columns:repeat(3,1fr);}}
+  @media (max-width:700px){.kanban{grid-template-columns:1fr;}}
+  .kanban-col{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px;min-height:120px;}
+  .kanban-col-head{display:flex;align-items:center;justify-content:space-between;padding:4px 4px 10px 4px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.03em;}
+  .kanban-count{background:var(--surface3);color:var(--text-muted);border-radius:20px;padding:1px 8px;font-size:11px;}
+  .order-card{
+    background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+    padding:10px 11px;margin-bottom:8px;cursor:pointer;font-size:12.5px;
+  }
+  .order-card:hover{border-color:var(--accent);}
+  .order-card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+  .order-card-id{font-weight:700;font-size:12.5px;}
+  .order-card-name{font-weight:600;margin-bottom:3px;}
+  .order-card-meta{color:var(--text-muted);font-size:11.5px;display:flex;justify-content:space-between;align-items:center;gap:6px;}
+  .order-card-actions{display:flex;gap:6px;margin-top:8px;}
+  .empty-state{color:var(--text-muted);font-size:12.5px;padding:20px;text-align:center;}
+
+  .batch-group{margin-bottom:20px;}
+  .batch-head{display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap;margin-bottom:10px;}
+  .batch-head-left{display:flex;align-items:center;gap:10px;}
+  .batch-date{font-size:16px;font-weight:700;}
+  .bake-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+  .bake-chip{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px;}
+  .bake-chip b{color:var(--accent);}
+
+  .drawer-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,0.55);display:flex;justify-content:flex-end;
+    z-index:100;
+  }
+  .drawer{
+    width:460px;max-width:100%;height:100%;background:var(--surface);border-left:1px solid var(--border);
+    padding:22px;overflow-y:auto;
+  }
+  @media (max-width:640px){.drawer{width:100%;}}
+  .drawer-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;}
+  .drawer-close{cursor:pointer;color:var(--text-muted);font-size:20px;line-height:1;background:none;border:none;}
+  .drawer-close:hover{color:var(--text);}
+  .field-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px;}
+  .field-label{color:var(--text-muted);}
+  .field-value{font-weight:600;text-align:right;}
+  .status-flow{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0;}
+
+  .toast-wrap{position:fixed;bottom:18px;right:18px;z-index:200;display:flex;flex-direction:column;gap:8px;}
+  .toast{background:var(--surface3);border:1px solid var(--border);border-left:3px solid var(--accent);padding:10px 14px;border-radius:8px;font-size:12.5px;box-shadow:0 6px 20px rgba(0,0,0,0.4);}
+  .toast.err{border-left-color:var(--red);}
+  .toast.ok{border-left-color:var(--green);}
+
+  .loading-screen{display:flex;align-items:center;justify-content:center;height:100vh;color:var(--text-muted);font-size:13px;}
+  .muted{color:var(--text-muted);}
+  .mono{font-variant-numeric:tabular-nums;}
+  .flex{display:flex;}
+  .items-center{align-items:center;}
+  .gap-8{gap:8px;}
+  .divider{height:1px;background:var(--border);margin:14px 0;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<!-- Safety net: if a CDN script above failed to load or anything throws before
+     React ever mounts, this catches it and shows a real error message instead
+     of a blank screen. Without this, an uncaught error just leaves #root
+     empty with no clue what happened. -->
+<script>
+  window.addEventListener('error', function (e) {
+    var root = document.getElementById('root');
+    if (root && !root.hasChildNodes()) {
+      var msg = (e && e.message) ? String(e.message) : 'Unknown error';
+      var isExtensionModuleError = /appendChild/.test(msg) && /import statement outside a module/.test(msg);
+      var explanation = isExtensionModuleError
+        ? 'This specific error is not from this page — it\'s the signature of a browser extension (Grammarly, a crypto wallet, React DevTools, etc.) injecting a script incorrectly, which happens often on local file:// pages. Try Incognito/Private mode (extensions off by default) — if it loads clean there, disable extensions one at a time in your normal window until you find the culprit.'
+        : 'A script failed before the app could load — usually a CDN script (React, Supabase, Chart.js) blocked or unreachable. Check your internet connection, or try disabling any ad blocker / content blocker for this page, then reload.';
+      root.innerHTML =
+        '<div style="padding:40px;max-width:640px;margin:0 auto;font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#E8EAF0;background:#0F1117;min-height:100vh;">' +
+        '<h2 style="margin-top:60px;">Dashboard couldn\'t start</h2>' +
+        '<p style="color:#8A91A6;">' + explanation + '</p>' +
+        '<p style="font-family:monospace;font-size:12.5px;color:#F5A623;background:#181C25;padding:12px;border-radius:8px;white-space:pre-wrap;">' +
+        msg.replace(/</g, '&lt;') +
+        '</p></div>';
+    }
+  });
+</script>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useMemo, useCallback, useRef } = React;
+
+/* ---------------------------------------------------------------------
+   Supabase setup
+--------------------------------------------------------------------- */
+const SUPABASE_URL = "https://yhrqzgcvxzezaakduvey.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlocnF6Z2N2eHplemFha2R1dmV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2MDEyMjcsImV4cCI6MjEwMTE3NzIyN30.VHkW-LHKuBzhFwxDBs_PH7sWuhD-5lfO-1ngATbRn-k";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// supabase-js normally refreshes an expiring access token on its own timer,
+// but that timer can stall in a backgrounded/inactive browser tab, leaving a
+// stale token in memory. Calling getSession() before a write forces the SDK
+// to check expiry and refresh synchronously if needed, so mutations don't
+// fail with a 401 just because the tab sat idle for a while.
+async function ensureFreshSession() {
+  try { await sb.auth.getSession(); } catch (e) { /* best effort */ }
+}
+
+const STATUS_FLOW = ["pending", "confirmed", "baking", "ready", "fulfilled"];
+const STATUS_LABEL = {
+  pending: "Pending", confirmed: "Confirmed", baking: "Baking",
+  ready: "Ready", fulfilled: "Fulfilled", cancelled: "Cancelled"
+};
+const HIGH_VALUE_THRESHOLD = 500;
+// Delivery is restricted to these schools only — everyone else picks up.
+// Keep this in sync with the same list in index.html.
+const SCHOOLS = ["San Ann Elem.", "Cypress Creek MS/HS", "Pasco High", "Wiregrass Elem.", "Pasco Middle School"];
+
+// ── Customer-facing email (order ready / reward earned) ──
+// Same EmailJS account/service as the guest order form (index.html) — just
+// two new templates, since those are for owner notifications, not customers.
+// FILL THESE IN once you've created the templates in your EmailJS dashboard
+// (Email Templates → Create New Template). Leave blank and the dashboard
+// just skips sending — nothing breaks, these emails simply won't go out yet.
+const EMAILJS_PUBLIC_KEY = 'nScaz-MO41hv0WiXe';
+const EMAILJS_SERVICE_ID = 'service_bimnpul';
+const EMAILJS_ORDER_READY_TEMPLATE_ID = 'template_6vyht1s';
+const EMAILJS_REWARD_EARNED_TEMPLATE_ID = ''; // e.g. 'template_xxxxxxx'
+if (window.emailjs) emailjs.init(EMAILJS_PUBLIC_KEY);
+
+/* ---------------------------------------------------------------------
+   Helpers
+--------------------------------------------------------------------- */
+function fmtMoney(n) {
+  const v = Number(n || 0);
+  return v.toLocaleString("en-US", { style: "currency", currency: "USD" });
+}
+// Postgres `date` columns (delivery_date, requested_date) come back as bare
+// "YYYY-MM-DD" strings with no timezone. `new Date("2026-08-04")` parses that
+// as UTC midnight, which — for a Florida (Eastern) browser — can silently
+// roll it back to Monday. Every date-only value in this app must go through
+// this parser so "Tuesday" always means Tuesday, regardless of the viewer's
+// timezone or time of day.
+function toLocalDate(d) {
+  // Always returns a *new* Date — several callers (startOfWeek, nextTuesdayFrom)
+  // mutate the returned object in place, so this must never hand back a
+  // reference the caller still holds elsewhere (e.g. a shared `now`).
+  if (d instanceof Date) return new Date(d.getTime());
+  const s = String(d);
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  return new Date(s);
+}
+function dateKey(d) {
+  const dt = toLocalDate(d);
+  const y = dt.getFullYear();
+  const mo = String(dt.getMonth() + 1).padStart(2, "0");
+  const da = String(dt.getDate()).padStart(2, "0");
+  return y + "-" + mo + "-" + da;
+}
+function fmtDate(d) {
+  if (!d) return "—";
+  const dt = toLocalDate(d);
+  if (isNaN(dt)) return String(d);
+  return dt.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+}
+function fmtDateTime(d) {
+  if (!d) return "—";
+  const dt = new Date(d);
+  if (isNaN(dt)) return String(d);
+  return dt.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+}
+function timeAgo(d) {
+  if (!d) return "—";
+  const diff = (Date.now() - new Date(d).getTime()) / 1000;
+  if (diff < 60) return "just now";
+  if (diff < 3600) return Math.floor(diff / 60) + "m ago";
+  if (diff < 86400) return Math.floor(diff / 3600) + "h ago";
+  return Math.floor(diff / 86400) + "d ago";
+}
+function startOfWeek(d) {
+  const dt = toLocalDate(d); const day = dt.getDay();
+  const diff = (day === 0 ? -6 : 1) - day; // Monday start
+  dt.setDate(dt.getDate() + diff); dt.setHours(0, 0, 0, 0); return dt;
+}
+function endOfWeek(d) {
+  const s = startOfWeek(d); const e = new Date(s); e.setDate(e.getDate() + 6); e.setHours(23, 59, 59, 999); return e;
+}
+function nextTuesdayFrom(d) {
+  const dt = toLocalDate(d); dt.setHours(0, 0, 0, 0);
+  const day = dt.getDay(); // Tue = 2
+  const diff = (2 - day + 7) % 7;
+  dt.setDate(dt.getDate() + diff);
+  return dt;
+}
+// Mirrors the DB trigger (compute_order_delivery_date): the cutoff for a given
+// Tuesday's batch is the Friday before it at 8pm. If "now" is past that
+// cutoff, the order rolls to the following Tuesday instead. Used so the
+// dashboard's own labels/defaults agree with what the database will actually
+// assign new orders.
+function computeAssignedTuesday(from = new Date()) {
+  const tue = nextTuesdayFrom(from);
+  const cutoff = new Date(tue);
+  cutoff.setDate(cutoff.getDate() - 4); // Friday before
+  cutoff.setHours(20, 0, 0, 0);
+  if (from > cutoff) tue.setDate(tue.getDate() + 7);
+  return tue;
+}
+function isoDateOnly(d) { return dateKey(d); }
+function weekKey(d) {
+  return dateKey(startOfWeek(d));
+}
+function monthKey(d) {
+  const dt = toLocalDate(d);
+  return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0");
+}
+function monthLabel(key) {
+  const [y, m] = key.split("-").map(Number);
+  return new Date(y, m - 1, 1).toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+}
+function startOfMonth(d) { const dt = toLocalDate(d); dt.setDate(1); dt.setHours(0, 0, 0, 0); return dt; }
+function startOfYear(d) { const dt = toLocalDate(d); dt.setMonth(0, 1); dt.setHours(0, 0, 0, 0); return dt; }
+
+/* ---------------------------------------------------------------------
+   Toasts
+--------------------------------------------------------------------- */
+let toastId = 0;
+function useToasts() {
+  const [toasts, setToasts] = useState([]);
+  const push = useCallback((msg, type = "ok") => {
+    const id = ++toastId;
+    setToasts(t => [...t, { id, msg, type }]);
+    setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 3500);
+  }, []);
+  return [toasts, push];
+}
+
+/* ---------------------------------------------------------------------
+   Data layer: fetch + realtime
+--------------------------------------------------------------------- */
+function useBakeryData(onError) {
+  const [products, setProducts] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [alerts, setAlerts] = useState([]);
+  const [rewards, setRewards] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [connected, setConnected] = useState(false);
+
+  // `onError` is typically passed as an inline arrow function by the caller,
+  // which is a new function identity on every render. If fetchAll depended on
+  // it directly, fetchAll would also change identity every render, which would
+  // retrigger the effects below (initial fetch + realtime subscribe) every
+  // render — an infinite fetch loop. Route it through a ref instead so
+  // fetchAll's identity is stable regardless of what the caller passes in.
+  const onErrorRef = useRef(onError);
+  useEffect(() => { onErrorRef.current = onError; }, [onError]);
+
+  const fetchAll = useCallback(async () => {
+    try {
+      const [p, c, o, a, r] = await Promise.all([
+        sb.from("products").select("*").order("name"),
+        sb.from("customers").select("*").order("name"),
+        sb.from("orders").select("*, order_items(*)").order("delivery_date", { ascending: true }),
+        sb.from("alerts").select("*").order("created_at", { ascending: false }),
+        sb.from("customer_rewards").select("*").order("earned_at", { ascending: false })
+      ]);
+      if (p.error) throw p.error;
+      if (c.error) throw c.error;
+      if (o.error) throw o.error;
+      if (a.error) throw a.error;
+      if (r.error) throw r.error;
+      setProducts(p.data || []);
+      setCustomers(c.data || []);
+      setOrders(o.data || []);
+      setAlerts(a.data || []);
+      setRewards(r.data || []);
+    } catch (e) {
+      console.error(e);
+      onErrorRef.current && onErrorRef.current("Couldn't load data: " + e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchAll(); }, [fetchAll]);
+
+  useEffect(() => {
+    let debounceTimer = null;
+    const debouncedRefetch = () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(fetchAll, 250);
+    };
+    const channel = sb.channel("crm-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, debouncedRefetch)
+      .on("postgres_changes", { event: "*", schema: "public", table: "order_items" }, debouncedRefetch)
+      .on("postgres_changes", { event: "*", schema: "public", table: "alerts" }, debouncedRefetch)
+      .on("postgres_changes", { event: "*", schema: "public", table: "products" }, debouncedRefetch)
+      .on("postgres_changes", { event: "*", schema: "public", table: "customers" }, debouncedRefetch)
+      .on("postgres_changes", { event: "*", schema: "public", table: "customer_rewards" }, debouncedRefetch)
+      .subscribe((status) => setConnected(status === "SUBSCRIBED"));
+    return () => { clearTimeout(debounceTimer); sb.removeChannel(channel); };
+  }, [fetchAll]);
+
+  return { products, customers, orders, alerts, rewards, loading, connected, refetch: fetchAll };
+}
+
+/* ---------------------------------------------------------------------
+   Small shared UI bits
+--------------------------------------------------------------------- */
+function StatusBadge({ status }) {
+  return <span className={"badge badge-" + (status || "pending")}>{STATUS_LABEL[status] || status}</span>;
+}
+function FulfillmentBadge({ fulfillment }) {
+  return <span className="badge badge-muted">{fulfillment === "delivery" ? "🚗 Delivery" : "🏠 Pickup"}</span>;
+}
+function Toasts({ toasts }) {
+  return (
+    <div className="toast-wrap">
+      {toasts.map(t => <div key={t.id} className={"toast " + t.type}>{t.msg}</div>)}
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------------
+   Status change modal — requires a reason before any manual status
+   change commits. The reason requirement is also enforced server-side
+   (see update_order_status RPC), so this isn't just a UI nicety — the
+   database itself rejects an empty reason.
+--------------------------------------------------------------------- */
+function StatusChangeModal({ order, newStatus, onConfirm, onCancel }) {
+  const [reason, setReason] = useState("");
+  const [saving, setSaving] = useState(false);
+  const trimmed = reason.trim();
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!trimmed) return;
+    setSaving(true);
+    await onConfirm(trimmed);
+    setSaving(false);
+  };
+
+  return (
+    <div className="drawer-overlay" onClick={onCancel}>
+      <form className="card" style={{ width: 380 }} onClick={e => e.stopPropagation()} onSubmit={submit}>
+        <div className="drawer-head" style={{ marginBottom: 10 }}>
+          <div style={{ fontSize: 15, fontWeight: 700 }}>Order #{order.id} → {STATUS_LABEL[newStatus]}</div>
+          <button type="button" className="drawer-close" onClick={onCancel}>✕</button>
+        </div>
+        <div className="muted" style={{ fontSize: 12, marginBottom: 12 }}>
+          {order.customer_name} · currently {STATUS_LABEL[order.status]}
+        </div>
+        <div style={{ marginBottom: 16 }}>
+          <div className="field-label" style={{ marginBottom: 4 }}>
+            Why are you making this change? <span style={{ color: "var(--red)" }}>*</span>
+          </div>
+          <textarea
+            style={{ width: "100%" }}
+            rows="3"
+            value={reason}
+            onChange={e => setReason(e.target.value)}
+            placeholder="e.g. Marked baking by mistake, moving back to confirmed"
+            autoFocus
+            required
+          />
+          <div className="muted" style={{ fontSize: 11, marginTop: 4 }}>
+            Logged to this order's history with your account and the time, so you can always tell what you changed versus anything that happened outside the dashboard.
+          </div>
+        </div>
+        <div className="flex gap-8">
+          <button type="button" className="btn btn-ghost" style={{ flex: 1 }} onClick={onCancel}>Cancel</button>
+          <button className="btn btn-accent" style={{ flex: 1 }} disabled={saving || !trimmed} type="submit">
+            {saving ? "Saving…" : "Confirm change"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------------
+   Order Detail Drawer
+--------------------------------------------------------------------- */
+function OrderDrawer({ order, onClose, onRequestStatusChange, alerts, customers, rewards, pushToast, refetch }) {
+  const [comms, setComms] = useState([]);
+  const [commsLoading, setCommsLoading] = useState(true);
+  useEffect(() => {
+    let active = true;
+    setCommsLoading(true);
+    sb.from("communications").select("*").eq("order_id", order.id).order("sent_at", { ascending: false })
+      .then(({ data, error }) => { if (active) { setComms(error ? [] : (data || [])); setCommsLoading(false); } });
+    return () => { active = false; };
+  }, [order.id]);
+
+  const [statusLog, setStatusLog] = useState([]);
+  const [statusLogLoading, setStatusLogLoading] = useState(true);
+  useEffect(() => {
+    let active = true;
+    setStatusLogLoading(true);
+    sb.from("order_status_log").select("*").eq("order_id", order.id).order("created_at", { ascending: false })
+      .then(({ data, error }) => { if (active) { setStatusLog(error ? [] : (data || [])); setStatusLogLoading(false); } });
+    return () => { active = false; };
+  }, [order.id]);
+
+  const items = order.order_items || [];
+  const relatedAlerts = alerts.filter(a => a.order_id === order.id);
+  const requestedWeek = order.requested_date ? weekKey(order.requested_date) : null;
+  const deliveryWeek = order.delivery_date ? weekKey(order.delivery_date) : null;
+  const rolled = requestedWeek && deliveryWeek && requestedWeek !== deliveryWeek;
+  const currentIdx = STATUS_FLOW.indexOf(order.status);
+
+  // ── Discount / comp editing ──
+  const subtotal = items.reduce((s, it) => s + Number(it.subtotal || 0), 0);
+  const [discountAmount, setDiscountAmount] = useState(order.discount_amount || 0);
+  const [discountReason, setDiscountReason] = useState(order.discount_reason || "");
+  const [savingDiscount, setSavingDiscount] = useState(false);
+  useEffect(() => {
+    setDiscountAmount(order.discount_amount || 0);
+    setDiscountReason(order.discount_reason || "");
+  }, [order.id]);
+
+  // Resolve which saved customer this order belongs to (same fallback the
+  // rest of the app uses: linked customer_id, else match by email) so we can
+  // check whether they have an unredeemed punch-card reward.
+  const resolvedCustomerId = order.customer_id ||
+    (order.customer_email ? (customers || []).find(c => (c.email || "").toLowerCase() === order.customer_email.toLowerCase())?.id : null) ||
+    null;
+  const unredeemedReward = resolvedCustomerId
+    ? (rewards || []).find(r => r.customer_id === resolvedCustomerId && !r.redeemed)
+    : null;
+
+  const applyCreditReward = () => {
+    setDiscountAmount(10);
+    setDiscountReason(`Punch-card reward — $10 credit (${unredeemedReward.milestone} pts)`);
+  };
+  const applyLoafReward = () => {
+    // Which item is "the specialty loaf" varies by order, so this doesn't
+    // guess a dollar amount — just sets the reason and leaves the amount for
+    // you to fill in as half that loaf's price.
+    setDiscountReason(`Punch-card reward — 50% off specialty loaf (${unredeemedReward.milestone} pts)`);
+    pushToast("Enter half the specialty loaf's price as the discount amount.", "ok");
+  };
+
+  const saveDiscount = async () => {
+    const amt = Number(discountAmount) || 0;
+    if (amt > 0 && !discountReason.trim()) { pushToast("Add a reason for the discount/comp.", "err"); return; }
+    setSavingDiscount(true);
+    await ensureFreshSession();
+    const newTotal = Math.max(0, subtotal - amt);
+    const { error } = await sb.from("orders").update({
+      discount_amount: amt,
+      discount_reason: amt > 0 ? discountReason.trim() : null,
+      total: newTotal
+    }).eq("id", order.id);
+    if (error) { setSavingDiscount(false); pushToast("Couldn't save discount: " + error.message, "err"); return; }
+
+    // If this discount is redeeming a punch-card reward, mark it redeemed
+    // and link it to this order.
+    if (amt > 0 && unredeemedReward && discountReason.trim().startsWith("Punch-card reward")) {
+      await sb.from("customer_rewards").update({
+        redeemed: true, redeemed_at: new Date().toISOString(), redeemed_order_id: order.id
+      }).eq("id", unredeemedReward.id);
+    }
+
+    setSavingDiscount(false);
+    pushToast("Order #" + order.id + " updated", "ok");
+    refetch();
+  };
+
+  return (
+    <div className="drawer-overlay" onClick={onClose}>
+      <div className="drawer" onClick={e => e.stopPropagation()}>
+        <div className="drawer-head">
+          <div>
+            <div style={{ fontSize: 17, fontWeight: 700 }}>Order #{order.id}</div>
+            <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>Placed {fmtDateTime(order.created_at)}</div>
+          </div>
+          <button className="drawer-close" onClick={onClose}>✕</button>
+        </div>
+
+        <div className="flex gap-8 items-center" style={{ marginBottom: 4 }}>
+          <StatusBadge status={order.status} />
+          <FulfillmentBadge fulfillment={order.fulfillment} />
+          {order.total >= HIGH_VALUE_THRESHOLD && <span className="badge badge-highvalue">⚡ High value</span>}
+        </div>
+
+        {order.status !== "cancelled" && (
+          <div className="status-flow">
+            {STATUS_FLOW.map((s, i) => (
+              <button key={s} className={"btn btn-sm " + (s === order.status ? "btn-accent" : "btn-ghost")}
+                disabled={s === order.status}
+                title={i < currentIdx ? "Move back to " + STATUS_LABEL[s] : undefined}
+                onClick={() => onRequestStatusChange(order, s)}>
+                {STATUS_LABEL[s]}
+              </button>
+            ))}
+            <button className="btn btn-sm btn-danger" onClick={() => onRequestStatusChange(order, "cancelled")}>Cancel order</button>
+          </div>
+        )}
+        {order.status === "cancelled" && (
+          <div style={{ margin: "14px 0" }}>
+            <button className="btn btn-sm" onClick={() => onRequestStatusChange(order, "pending")}>Reinstate as pending</button>
+          </div>
+        )}
+
+        <div className="divider" />
+        <div className="field-row"><span className="field-label">Customer</span><span className="field-value">{order.customer_name || "—"}</span></div>
+        <div className="field-row"><span className="field-label">Email</span><span className="field-value">{order.customer_email || "—"}</span></div>
+        <div className="field-row"><span className="field-label">Phone</span><span className="field-value">{order.customer_phone || "—"}</span></div>
+        <div className="field-row"><span className="field-label">Fulfillment</span><span className="field-value">{order.fulfillment || "pickup"}</span></div>
+        {order.fulfillment === "delivery" && (
+          <div className="field-row"><span className="field-label">Delivery location</span><span className="field-value">{order.delivery_location || "—"}</span></div>
+        )}
+        <div className="field-row"><span className="field-label">Requested date</span><span className="field-value">{fmtDate(order.requested_date)}</span></div>
+        <div className="field-row">
+          <span className="field-label">Delivery (Tuesday)</span>
+          <span className="field-value">{fmtDate(order.delivery_date)} {rolled && <span className="badge badge-muted" style={{ marginLeft: 6 }}>rolled from Fri cutoff</span>}</span>
+        </div>
+        <div className="field-row"><span className="field-label">Payment method</span><span className="field-value">{order.payment_method || "—"}</span></div>
+
+        <div className="divider" />
+        <div className="section-title" style={{ marginBottom: 8 }}>Items</div>
+        <table>
+          <thead><tr><th>Product</th><th>Qty</th><th>Price</th><th>Subtotal</th></tr></thead>
+          <tbody>
+            {items.length === 0 && <tr><td colSpan="4" className="muted">No line items</td></tr>}
+            {items.map(it => (
+              <tr key={it.id}>
+                <td>{it.product_name}</td>
+                <td>{it.quantity}</td>
+                <td>{fmtMoney(it.unit_price)}</td>
+                <td>{fmtMoney(it.subtotal)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div className="flex" style={{ justifyContent: "space-between", marginTop: 8, fontSize: 12.5, color: "var(--text-muted)" }}>
+          <span>Item subtotal</span><span>{fmtMoney(subtotal)}</span>
+        </div>
+        {Number(order.discount_amount || 0) > 0 && (
+          <div className="flex" style={{ justifyContent: "space-between", fontSize: 12.5, color: "var(--text-muted)" }}>
+            <span>Discount/comp{order.discount_reason ? " — " + order.discount_reason : ""}</span><span>−{fmtMoney(order.discount_amount)}</span>
+          </div>
+        )}
+        <div className="flex" style={{ justifyContent: "flex-end", marginTop: 4, fontWeight: 700 }}>
+          Total: {fmtMoney(order.total)}
+        </div>
+
+        <div className="divider" />
+        <div className="section-title">Discount / comp</div>
+        {unredeemedReward && (
+          <div style={{ background: "var(--green-dim)", border: "1px solid rgba(46,204,113,0.3)", borderRadius: 8, padding: "10px", marginBottom: 10, fontSize: 12.5 }}>
+            <div style={{ marginBottom: 8 }}>🎁 This customer has an unredeemed reward ({unredeemedReward.milestone} pts / ${unredeemedReward.milestone * 10} spent)</div>
+            <div className="flex gap-8">
+              <button type="button" className="btn btn-sm btn-green" onClick={applyCreditReward}>$10 credit</button>
+              <button type="button" className="btn btn-sm btn-green" onClick={applyLoafReward}>50% off specialty loaf</button>
+            </div>
+          </div>
+        )}
+        <div className="flex gap-8" style={{ marginBottom: 8 }}>
+          <div style={{ flex: 1 }}>
+            <div className="field-label" style={{ marginBottom: 4 }}>Discount / comp amount ($)</div>
+            <input type="number" step="0.01" min="0" style={{ width: "100%" }} value={discountAmount}
+              onChange={e => setDiscountAmount(e.target.value)} />
+          </div>
+        </div>
+        <div style={{ marginBottom: 10 }}>
+          <div className="field-label" style={{ marginBottom: 4 }}>Reason</div>
+          <input style={{ width: "100%" }} value={discountReason} onChange={e => setDiscountReason(e.target.value)}
+            placeholder="e.g. Punch-card reward, goodwill discount, pricing mistake" />
+        </div>
+        <button className="btn btn-sm btn-accent" disabled={savingDiscount} onClick={saveDiscount}>
+          {savingDiscount ? "Saving…" : "Save discount / comp"}
+        </button>
+
+        {order.notes && (
+          <React.Fragment>
+            <div className="divider" />
+            <div className="section-title">Notes</div>
+            <div style={{ fontSize: 13, color: "var(--text)", background: "var(--surface2)", padding: 10, borderRadius: 8 }}>{order.notes}</div>
+          </React.Fragment>
+        )}
+
+        {relatedAlerts.length > 0 && (
+          <React.Fragment>
+            <div className="divider" />
+            <div className="section-title">Alerts on this order</div>
+            {relatedAlerts.map(a => (
+              <div key={a.id} className="field-row">
+                <span className="field-label">{a.type}{a.resolved ? " (resolved)" : ""}</span>
+                <span className="field-value" style={{ fontWeight: 400 }}>{a.message}</span>
+              </div>
+            ))}
+          </React.Fragment>
+        )}
+
+        <div className="divider" />
+        <div className="section-title">Status history</div>
+        {statusLogLoading ? <div className="muted">Loading…</div> :
+          statusLog.length === 0 ? <div className="muted">No status changes logged yet.</div> :
+          statusLog.map(l => (
+            <div key={l.id} className="field-row" style={{ display: "block" }}>
+              <div className="flex" style={{ justifyContent: "space-between" }}>
+                <span>{l.old_status ? (STATUS_LABEL[l.old_status] || l.old_status) : "—"} → <b>{STATUS_LABEL[l.new_status] || l.new_status}</b></span>
+                <span className="muted" style={{ fontSize: 11 }}>{fmtDateTime(l.created_at)}</span>
+              </div>
+              <div className="muted" style={{ fontSize: 11.5, marginTop: 2 }}>
+                {l.source === "dashboard" ? l.changed_by : "Changed outside the dashboard"}
+                {l.source !== "dashboard" && <span className="badge badge-muted" style={{ marginLeft: 6 }}>no reason logged</span>}
+              </div>
+              {l.reason && <div style={{ marginTop: 4 }}>{l.reason}</div>}
+            </div>
+          ))
+        }
+
+        <div className="divider" />
+        <div className="section-title">Communications</div>
+        {commsLoading ? <div className="muted">Loading…</div> :
+          comms.length === 0 ? <div className="muted">No logged communications for this order.</div> :
+          comms.map(c => (
+            <div key={c.id} className="field-row" style={{ display: "block" }}>
+              <div className="flex" style={{ justifyContent: "space-between" }}>
+                <span className="badge badge-muted">{c.type || "note"}</span>
+                <span className="muted" style={{ fontSize: 11 }}>{fmtDateTime(c.sent_at)}</span>
+              </div>
+              <div style={{ marginTop: 4 }}>{c.message}</div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------------
+   Dashboard tab
+--------------------------------------------------------------------- */
+// Trailing-12-month revenue bar chart. Chart.js isn't a React component, so
+// this drives it imperatively via a canvas ref — create once, destroy and
+// recreate whenever the underlying data actually changes.
+function RevenueTrendChart({ labels, data }) {
+  const canvasRef = useRef(null);
+  const chartRef = useRef(null);
+
+  useEffect(() => {
+    if (!canvasRef.current || !window.Chart) return;
+    if (chartRef.current) chartRef.current.destroy();
+    chartRef.current = new window.Chart(canvasRef.current, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [{
+          label: "Revenue",
+          data,
+          backgroundColor: "rgba(79,142,247,0.55)",
+          borderColor: "#4F8EF7",
+          borderWidth: 1.5,
+          borderRadius: 4,
+          maxBarThickness: 34
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => "$" + Number(ctx.parsed.y || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+            }
+          }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: "#8A91A6", font: { size: 11 } } },
+          y: {
+            beginAtZero: true,
+            grid: { color: "#2A3040" },
+            ticks: { color: "#8A91A6", font: { size: 11 }, callback: (v) => "$" + Number(v).toLocaleString("en-US") }
+          }
+        }
+      }
+    });
+    return () => { if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null; } };
+    // eslint-disable-next-line
+  }, [JSON.stringify(labels), JSON.stringify(data)]);
+
+  return <div style={{ height: 220 }}><canvas ref={canvasRef}></canvas></div>;
+}
+
+// Generic "which key had the highest summed value" helper, used for the
+// MTD/YTD highlight cards below.
+function topBy(list, keyFn, nameFn, valueFn) {
+  const tally = {};
+  list.forEach(x => {
+    const key = keyFn(x);
+    if (key === null || key === undefined || key === "") return;
+    if (!tally[key]) tally[key] = { name: nameFn(x), value: 0 };
+    tally[key].value += valueFn(x);
+  });
+  const arr = Object.values(tally).sort((a, b) => b.value - a.value);
+  return arr[0] || null;
+}
+function topItemBy(ordersList, valueFn) {
+  const tally = {};
+  ordersList.forEach(o => {
+    (o.order_items || []).forEach(it => {
+      const key = it.product_name || "Unknown";
+      tally[key] = (tally[key] || 0) + valueFn(it, o);
+    });
+  });
+  const arr = Object.entries(tally).sort((a, b) => b[1] - a[1]);
+  return arr[0] || null; // [name, value]
+}
+
+function DashboardTab({ orders, customers, products, alerts, onOpenOrder }) {
+  const now = new Date();
+  const wkStart = startOfWeek(now), wkEnd = endOfWeek(now);
+  const activeOrders = orders.filter(o => o.status !== "cancelled");
+
+  const revenueThisWeek = activeOrders
+    .filter(o => o.delivery_date && toLocalDate(o.delivery_date) >= wkStart && toLocalDate(o.delivery_date) <= wkEnd)
+    .reduce((s, o) => s + Number(o.total || 0), 0);
+
+  const upcomingTuesday = isoDateOnly(computeAssignedTuesday(now));
+  const ordersThisTuesday = activeOrders.filter(o => o.delivery_date === upcomingTuesday);
+
+  const unresolvedAlerts = alerts.filter(a => !a.resolved);
+
+  const inProgress = activeOrders.filter(o => ["pending", "confirmed", "baking"].includes(o.status));
+
+  // top products - last 30 days by created_at
+  const cutoff = new Date(now); cutoff.setDate(cutoff.getDate() - 30);
+  const productTally = {};
+  activeOrders.forEach(o => {
+    if (!o.created_at || new Date(o.created_at) < cutoff) return;
+    (o.order_items || []).forEach(it => {
+      const key = it.product_name || "Unknown";
+      if (!productTally[key]) productTally[key] = { qty: 0, revenue: 0 };
+      productTally[key].qty += Number(it.quantity || 0);
+      productTally[key].revenue += Number(it.subtotal || 0);
+    });
+  });
+  const topProducts = Object.entries(productTally).sort((a, b) => b[1].qty - a[1].qty).slice(0, 5);
+
+  const recentOrders = [...orders].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 6);
+
+  // ── MTD / YTD business highlights ──
+  const [period, setPeriod] = useState("mtd");
+  const periodStart = period === "mtd" ? startOfMonth(now) : startOfYear(now);
+  const periodOrders = activeOrders.filter(o => o.delivery_date && toLocalDate(o.delivery_date) >= periodStart && toLocalDate(o.delivery_date) <= now);
+
+  const topCustomer = topBy(
+    periodOrders,
+    o => o.customer_id || (o.customer_email || "").toLowerCase() || null,
+    o => o.customer_name || "Unknown",
+    o => Number(o.total || 0)
+  );
+  const popularItem = topItemBy(periodOrders, (it) => Number(it.quantity || 0));
+  const productCogsById = {};
+  products.forEach(p => { productCogsById[p.id] = Number(p.cost_of_goods || 0); });
+  const netRevenueItem = topItemBy(periodOrders, (it) => {
+    const cogs = productCogsById[it.product_id] ?? 0;
+    return (Number(it.unit_price || 0) - cogs) * Number(it.quantity || 0);
+  });
+
+  // ── Trailing-12-month revenue trend ──
+  const monthKeys = [];
+  { const base = startOfMonth(now); for (let i = 11; i >= 0; i--) { const dt = new Date(base.getFullYear(), base.getMonth() - i, 1); monthKeys.push(dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0")); } }
+  const revenueByMonth = {};
+  activeOrders.forEach(o => { if (!o.delivery_date) return; const k = monthKey(o.delivery_date); revenueByMonth[k] = (revenueByMonth[k] || 0) + Number(o.total || 0); });
+  const chartLabels = monthKeys.map(monthLabel);
+  const chartData = monthKeys.map(k => revenueByMonth[k] || 0);
+
+  return (
+    <div>
+      <div className="grid grid-4" style={{ marginBottom: 18 }}>
+        <div className="card stat-card">
+          <div className="stat-label">Revenue this week</div>
+          <div className="stat-value">{fmtMoney(revenueThisWeek)}</div>
+          <div className="stat-sub">Orders delivering {fmtDate(wkStart)} – {fmtDate(wkEnd)}</div>
+        </div>
+        <div className="card stat-card">
+          <div className="stat-label">Orders this Tuesday</div>
+          <div className="stat-value">{ordersThisTuesday.length}</div>
+          <div className="stat-sub">{fmtDate(upcomingTuesday)} batch</div>
+        </div>
+        <div className="card stat-card">
+          <div className="stat-label">In progress</div>
+          <div className="stat-value">{inProgress.length}</div>
+          <div className="stat-sub">Pending / confirmed / baking</div>
+        </div>
+        <div className="card stat-card">
+          <div className="stat-label">Unresolved alerts</div>
+          <div className="stat-value" style={{ color: unresolvedAlerts.length ? "var(--red)" : "var(--text)" }}>{unresolvedAlerts.length}</div>
+          <div className="stat-sub">{customers.length} customers on file</div>
+        </div>
+      </div>
+
+      <div className="card" style={{ marginBottom: 18 }}>
+        <div className="section-title">
+          <span>Business highlights</span>
+          <div className="flex gap-8">
+            <button className={"btn btn-sm " + (period === "mtd" ? "btn-accent" : "btn-ghost")} onClick={() => setPeriod("mtd")}>This month</button>
+            <button className={"btn btn-sm " + (period === "ytd" ? "btn-accent" : "btn-ghost")} onClick={() => setPeriod("ytd")}>This year</button>
+          </div>
+        </div>
+        <div className="grid grid-3">
+          <div className="stat-card">
+            <div className="stat-label">Top customer</div>
+            <div className="stat-value" style={{ fontSize: 18 }}>{topCustomer ? topCustomer.name : "—"}</div>
+            <div className="stat-sub">{topCustomer ? fmtMoney(topCustomer.value) + " spent" : "No orders yet this period"}</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-label">Most popular item</div>
+            <div className="stat-value" style={{ fontSize: 18 }}>{popularItem ? popularItem[0] : "—"}</div>
+            <div className="stat-sub">{popularItem ? popularItem[1] + " sold" : "No sales yet this period"}</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-label">Top revenue item <span className="muted" style={{ fontWeight: 400, fontSize: 10.5 }}>(net margin)</span></div>
+            <div className="stat-value" style={{ fontSize: 18 }}>{netRevenueItem ? netRevenueItem[0] : "—"}</div>
+            <div className="stat-sub">{netRevenueItem ? fmtMoney(netRevenueItem[1]) + " margin" : "No sales yet this period"}</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="card" style={{ marginBottom: 18 }}>
+        <div className="section-title">Revenue trend <span className="muted" style={{ fontWeight: 400, fontSize: 11 }}>trailing 12 months, by delivery date</span></div>
+        <RevenueTrendChart labels={chartLabels} data={chartData} />
+      </div>
+
+      <div className="grid grid-2">
+        <div className="card">
+          <div className="section-title">Recent orders</div>
+          <table>
+            <thead><tr><th>Order</th><th>Customer</th><th>Delivery</th><th>Total</th><th>Status</th></tr></thead>
+            <tbody>
+              {recentOrders.length === 0 && <tr><td colSpan="5" className="empty-state">No orders yet.</td></tr>}
+              {recentOrders.map(o => (
+                <tr key={o.id} className="clickable" onClick={() => onOpenOrder(o)}>
+                  <td>#{o.id}</td>
+                  <td>{o.customer_name}</td>
+                  <td>{fmtDate(o.delivery_date)}</td>
+                  <td>{fmtMoney(o.total)}</td>
+                  <td><StatusBadge status={o.status} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="card">
+          <div className="section-title">Top products <span className="muted" style={{ fontWeight: 400, fontSize: 11 }}>last 30 days</span></div>
+          {topProducts.length === 0 && <div className="empty-state">No sales data yet.</div>}
+          {topProducts.map(([name, d]) => (
+            <div key={name} className="field-row">
+              <span className="field-label">{name}</span>
+              <span className="field-value">{d.qty} sold · {fmtMoney(d.revenue)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------------
+   Tuesday Batch tab — grouped by delivery date by default, but can be
+   regrouped by month / year / customer for a different vantage point.
+   Groups are collapsed by default (this week's batch auto-opens since
+   that's the one you actually need to bake) and expand on click, or all
+   at once via Expand all / Collapse all.
+--------------------------------------------------------------------- */
+function BatchTab({ orders, onOpenOrder }) {
+  const [groupBy, setGroupBy] = useState("date"); // date | month | year | customer
+  const [sortDir, setSortDir] = useState("asc");
+  const [customerSort, setCustomerSort] = useState("revenue"); // revenue | name
+  const [expanded, setExpanded] = useState({});
+  const [search, setSearch] = useState("");
+
+  const thisTuesdayDate = computeAssignedTuesday(new Date());
+  const thisTuesday = dateKey(thisTuesdayDate);
+  const dayAfterThisTuesday = new Date(thisTuesdayDate); dayAfterThisTuesday.setDate(dayAfterThisTuesday.getDate() + 1);
+  const nextT = dateKey(nextTuesdayFrom(dayAfterThisTuesday));
+
+  const q = search.trim().toLowerCase();
+  const active = orders.filter(o => o.status !== "cancelled" && o.delivery_date &&
+    (!q || (o.customer_name || "").toLowerCase().includes(q)));
+
+  const groups = {};
+  active.forEach(o => {
+    let key, label, sublabel = null;
+    if (groupBy === "date") {
+      key = o.delivery_date;
+      label = fmtDate(o.delivery_date);
+      sublabel = key === thisTuesday ? "This Tuesday" : key === nextT ? "Next Tuesday" : (key < thisTuesday ? "Past" : null);
+    } else if (groupBy === "month") {
+      key = monthKey(o.delivery_date);
+      const [y, m] = key.split("-").map(Number);
+      label = new Date(y, m - 1, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+    } else if (groupBy === "year") {
+      key = String(o.delivery_date).slice(0, 4);
+      label = key;
+    } else {
+      key = o.customer_id || ("email:" + (o.customer_email || "").toLowerCase()) || ("name:" + (o.customer_name || "unknown"));
+      label = o.customer_name || "Unknown customer";
+    }
+    if (!groups[key]) groups[key] = { key, label, sublabel, orders: [] };
+    groups[key].orders.push(o);
+  });
+
+  let keys = Object.keys(groups);
+  if (groupBy === "customer") {
+    keys.sort((a, b) => {
+      if (customerSort === "name") return groups[a].label.localeCompare(groups[b].label);
+      const revA = groups[a].orders.reduce((s, o) => s + Number(o.total || 0), 0);
+      const revB = groups[b].orders.reduce((s, o) => s + Number(o.total || 0), 0);
+      return revB - revA;
+    });
+  } else {
+    keys.sort();
+    if (sortDir === "desc") keys.reverse();
+  }
+
+  const isExpanded = (key) => {
+    if (expanded[key] !== undefined) return expanded[key];
+    return groupBy === "date" && key === thisTuesday;
+  };
+  const toggle = (key) => setExpanded(prev => ({ ...prev, [key]: !isExpanded(key) }));
+  const expandAll = () => { const next = {}; keys.forEach(k => next[k] = true); setExpanded(next); };
+  const collapseAll = () => { const next = {}; keys.forEach(k => next[k] = false); setExpanded(next); };
+
+  return (
+    <div>
+      <div className="card" style={{ marginBottom: 16 }}>
+        <div className="flex gap-8 items-center" style={{ flexWrap: "wrap", justifyContent: "space-between" }}>
+          <div className="flex gap-8 items-center" style={{ flexWrap: "wrap" }}>
+            <span className="field-label">Group by</span>
+            <button className={"btn btn-sm " + (groupBy === "date" ? "btn-accent" : "btn-ghost")} onClick={() => setGroupBy("date")}>Tuesday</button>
+            <button className={"btn btn-sm " + (groupBy === "month" ? "btn-accent" : "btn-ghost")} onClick={() => setGroupBy("month")}>Month</button>
+            <button className={"btn btn-sm " + (groupBy === "year" ? "btn-accent" : "btn-ghost")} onClick={() => setGroupBy("year")}>Year</button>
+            <button className={"btn btn-sm " + (groupBy === "customer" ? "btn-accent" : "btn-ghost")} onClick={() => setGroupBy("customer")}>Customer</button>
+          </div>
+          <div className="flex gap-8 items-center" style={{ flexWrap: "wrap" }}>
+            {groupBy === "customer" ? (
+              <React.Fragment>
+                <span className="field-label">Sort</span>
+                <button className={"btn btn-sm " + (customerSort === "revenue" ? "btn-accent" : "btn-ghost")} onClick={() => setCustomerSort("revenue")}>Revenue</button>
+                <button className={"btn btn-sm " + (customerSort === "name" ? "btn-accent" : "btn-ghost")} onClick={() => setCustomerSort("name")}>Name A–Z</button>
+              </React.Fragment>
+            ) : (
+              <React.Fragment>
+                <span className="field-label">Order</span>
+                <button className={"btn btn-sm " + (sortDir === "asc" ? "btn-accent" : "btn-ghost")} onClick={() => setSortDir("asc")}>Oldest first</button>
+                <button className={"btn btn-sm " + (sortDir === "desc" ? "btn-accent" : "btn-ghost")} onClick={() => setSortDir("desc")}>Newest first</button>
+              </React.Fragment>
+            )}
+          </div>
+        </div>
+        <div className="flex gap-8 items-center" style={{ marginTop: 10, flexWrap: "wrap", justifyContent: "space-between" }}>
+          <input placeholder="Filter by customer name…" value={search} onChange={e => setSearch(e.target.value)} style={{ maxWidth: 240 }} />
+          <div className="flex gap-8">
+            <button className="btn btn-sm btn-ghost" onClick={expandAll}>Expand all</button>
+            <button className="btn btn-sm btn-ghost" onClick={collapseAll}>Collapse all</button>
+          </div>
+        </div>
+      </div>
+
+      {keys.length === 0 && (
+        <div className="card"><div className="empty-state">No orders match this view yet.</div></div>
+      )}
+
+      {keys.map(key => {
+        const g = groups[key];
+        const batchOrders = [...g.orders].sort((a, b) => (a.customer_name || "").localeCompare(b.customer_name || ""));
+        const tally = {};
+        let revenue = 0;
+        batchOrders.forEach(o => {
+          revenue += Number(o.total || 0);
+          (o.order_items || []).forEach(it => {
+            const k = it.product_name || "Unknown";
+            tally[k] = (tally[k] || 0) + Number(it.quantity || 0);
+          });
+        });
+        const items = Object.entries(tally).sort((a, b) => b[1] - a[1]);
+        const totalLoaves = items.reduce((s, [, qv]) => s + qv, 0);
+        const open = isExpanded(key);
+
+        return (
+          <div className="batch-group card" key={key}>
+            <div className="batch-head" style={{ cursor: "pointer", marginBottom: open ? 10 : 0 }} onClick={() => toggle(key)}>
+              <div className="batch-head-left">
+                <span className="muted" style={{ fontSize: 12 }}>{open ? "▾" : "▸"}</span>
+                <div className="batch-date">{g.label}</div>
+                {g.sublabel && <span className={"badge " + (g.sublabel === "This Tuesday" ? "badge-confirmed" : g.sublabel === "Past" ? "badge-muted" : "badge-ready")}>{g.sublabel}</span>}
+              </div>
+              <div className="muted" style={{ fontSize: 12.5 }}>{batchOrders.length} orders · {totalLoaves} items · {fmtMoney(revenue)}</div>
+            </div>
+
+            {open && (
+              <React.Fragment>
+                <div className="bake-list">
+                  {items.map(([name, qty]) => (
+                    <div className="bake-chip" key={name}><b>{qty}×</b> {name}</div>
+                  ))}
+                </div>
+
+                <div className="divider" />
+                <table>
+                  <thead><tr><th>Order</th><th>Customer</th><th>Fulfillment</th><th>Items</th><th>Total</th><th>Status</th></tr></thead>
+                  <tbody>
+                    {batchOrders.map(o => (
+                      <tr key={o.id} className="clickable" onClick={() => onOpenOrder(o)}>
+                        <td>#{o.id}</td>
+                        <td>{o.customer_name}</td>
+                        <td><FulfillmentBadge fulfillment={o.fulfillment} /></td>
+                        <td>{(o.order_items || []).reduce((s, it) => s + Number(it.quantity || 0), 0)}</td>
+                        <td>{fmtMoney(o.total)}</td>
+                        <td><StatusBadge status={o.status} /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </React.Fragment>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------------
+   Orders / Kanban tab — the board only shows what's actionable right now.
+   Fulfilled orders age out of the board once their delivery month isn't
+   the current month, and land in a collapsed, searchable Archive section
+   instead, so the "Fulfilled" column doesn't fill up with everything
+   that's ever shipped.
+--------------------------------------------------------------------- */
+// Excel-style column header: click a column label to sort by it, click the
+// ▾ to open a checkbox list of every distinct value in that column (search,
+// select/clear all, multi-select) — same mental model as AutoFilter.
+function FilterHeader({ label, colKey, allValues, activeSet, onFilterChange, sortActive, sortDir, onSort }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  const isFiltered = !!activeSet;
+  const checkedSet = activeSet || new Set(allValues);
+  const filteredValues = allValues.filter(v => v.toLowerCase().includes(search.toLowerCase()));
+  const allChecked = checkedSet.size === allValues.length;
+
+  const toggleValue = (v) => {
+    const next = new Set(checkedSet);
+    if (next.has(v)) next.delete(v); else next.add(v);
+    onFilterChange(colKey, next.size === allValues.length ? null : next);
+  };
+
+  return (
+    <th style={{ position: "relative", userSelect: "none" }}>
+      <div className="flex items-center gap-8">
+        <span style={{ cursor: "pointer" }} onClick={() => onSort(colKey, sortActive && sortDir === "asc" ? "desc" : "asc")}>
+          {label}{sortActive && <span style={{ marginLeft: 4 }}>{sortDir === "asc" ? "▲" : "▼"}</span>}
+        </span>
+        <span style={{ cursor: "pointer", fontSize: 10, color: isFiltered ? "var(--accent)" : "var(--text-muted)" }} onClick={() => setOpen(o => !o)}>▾</span>
+      </div>
+      {open && (
+        <div ref={ref} className="card" style={{ position: "absolute", top: "100%", left: 0, marginTop: 4, zIndex: 50, width: 220, padding: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.4)", fontWeight: 400, textTransform: "none" }}>
+          <div className="flex gap-8" style={{ marginBottom: 8 }}>
+            <button type="button" className="btn btn-sm btn-ghost" style={{ flex: 1 }} onClick={() => { onSort(colKey, "asc"); setOpen(false); }}>↑ Sort</button>
+            <button type="button" className="btn btn-sm btn-ghost" style={{ flex: 1 }} onClick={() => { onSort(colKey, "desc"); setOpen(false); }}>↓ Sort</button>
+          </div>
+          <input placeholder="Search values…" value={search} onChange={e => setSearch(e.target.value)} style={{ width: "100%", marginBottom: 8 }} />
+          <div style={{ maxHeight: 180, overflowY: "auto", marginBottom: 8 }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, marginBottom: 6, fontWeight: 600 }}>
+              <input type="checkbox" checked={allChecked} onChange={() => onFilterChange(colKey, allChecked ? new Set() : null)} />
+              (Select all)
+            </label>
+            {filteredValues.map(v => (
+              <label key={v || "∅"} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, marginBottom: 3 }}>
+                <input type="checkbox" checked={checkedSet.has(v)} onChange={() => toggleValue(v)} />
+                {v || "(blank)"}
+              </label>
+            ))}
+          </div>
+          {isFiltered && <button type="button" className="btn btn-sm btn-ghost" style={{ width: "100%" }} onClick={() => onFilterChange(colKey, null)}>Clear filter</button>}
+        </div>
+      )}
+    </th>
+  );
+}
+
+const ORDERS_TABLE_COLUMNS = [
+  { key: "id", label: "Order #", get: o => String(o.id) },
+  { key: "customer_name", label: "Customer", get: o => o.customer_name || "—" },
+  { key: "status", label: "Status", get: o => STATUS_LABEL[o.status] || o.status },
+  { key: "fulfillment", label: "Fulfillment", get: o => o.fulfillment === "delivery" ? "Delivery" : "Pickup" },
+  { key: "delivery_date", label: "Delivery", get: o => o.delivery_date ? fmtDate(o.delivery_date) : "—", sortValue: o => o.delivery_date || "" },
+  { key: "total", label: "Total", get: o => fmtMoney(o.total), sortValue: o => Number(o.total || 0) },
+  { key: "payment_method", label: "Payment", get: o => o.payment_method || "—" },
+];
+
+function OrdersTab({ orders, onOpenOrder, onRequestStatusChange }) {
+  const [showCancelled, setShowCancelled] = useState(false);
+  const [showArchive, setShowArchive] = useState(false);
+  const [archiveQuery, setArchiveQuery] = useState("");
+  const [cardSort, setCardSort] = useState("date"); // date | month | customer
+  const [cardSortDir, setCardSortDir] = useState("asc");
+  const [viewMode, setViewMode] = useState("board"); // board | table
+  const [colFilters, setColFilters] = useState({}); // colKey -> Set (active filter) | null/undefined (no filter)
+  const [tableSortCol, setTableSortCol] = useState("delivery_date");
+  const [tableSortDir, setTableSortDir] = useState("desc");
+  const columns = STATUS_FLOW;
+
+  const distinctValues = useMemo(() => {
+    const out = {};
+    ORDERS_TABLE_COLUMNS.forEach(col => { out[col.key] = [...new Set(orders.map(col.get))].sort(); });
+    return out;
+  }, [orders]);
+
+  const tableRows = useMemo(() => {
+    let rows = orders.filter(o => ORDERS_TABLE_COLUMNS.every(col => {
+      const active = colFilters[col.key];
+      return !active || active.has(col.get(o));
+    }));
+    const sortCol = ORDERS_TABLE_COLUMNS.find(c => c.key === tableSortCol);
+    if (sortCol) {
+      const val = sortCol.sortValue || sortCol.get;
+      rows = [...rows].sort((a, b) => {
+        const va = val(a), vb = val(b);
+        const cmp = typeof va === "number" ? va - vb : String(va).localeCompare(String(vb));
+        return tableSortDir === "desc" ? -cmp : cmp;
+      });
+    }
+    return rows;
+  }, [orders, colFilters, tableSortCol, tableSortDir]);
+
+  const activeFilterCount = Object.values(colFilters).filter(Boolean).length;
+
+  const currentMonth = monthKey(new Date());
+  const isArchived = (o) => o.status === "fulfilled" && o.delivery_date && monthKey(o.delivery_date) !== currentMonth;
+  const activeOrders = orders.filter(o => !isArchived(o));
+  const archivedOrders = orders.filter(isArchived);
+
+  const cardComparator = (a, b) => {
+    let cmp;
+    if (cardSort === "customer") {
+      cmp = (a.customer_name || "").localeCompare(b.customer_name || "");
+    } else if (cardSort === "month") {
+      const ma = a.delivery_date ? monthKey(a.delivery_date) : "";
+      const mb = b.delivery_date ? monthKey(b.delivery_date) : "";
+      cmp = ma.localeCompare(mb) || (a.delivery_date || "").localeCompare(b.delivery_date || "");
+    } else {
+      cmp = (a.delivery_date || "").localeCompare(b.delivery_date || "");
+    }
+    return cardSortDir === "desc" ? -cmp : cmp;
+  };
+
+  const aq = archiveQuery.trim().toLowerCase();
+  const archiveVisible = archivedOrders
+    .filter(o => !aq || (o.customer_name || "").toLowerCase().includes(aq) || String(o.id).includes(aq))
+    .sort(cardComparator);
+  const archiveRevenue = archivedOrders.reduce((s, o) => s + Number(o.total || 0), 0);
+
+  return (
+    <div>
+      <div className="flex items-center" style={{ justifyContent: "space-between", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
+        <div className="flex gap-8 items-center">
+          <button className={"btn btn-sm " + (viewMode === "board" ? "btn-accent" : "btn-ghost")} onClick={() => setViewMode("board")}>📋 Board</button>
+          <button className={"btn btn-sm " + (viewMode === "table" ? "btn-accent" : "btn-ghost")} onClick={() => setViewMode("table")}>▤ Table</button>
+        </div>
+        {viewMode === "board" && (
+          <React.Fragment>
+            <div className="flex gap-8 items-center" style={{ flexWrap: "wrap" }}>
+              <span className="field-label">Sort cards</span>
+              <button className={"btn btn-sm " + (cardSort === "date" ? "btn-accent" : "btn-ghost")} onClick={() => setCardSort("date")}>Date</button>
+              <button className={"btn btn-sm " + (cardSort === "month" ? "btn-accent" : "btn-ghost")} onClick={() => setCardSort("month")}>Month</button>
+              <button className={"btn btn-sm " + (cardSort === "customer" ? "btn-accent" : "btn-ghost")} onClick={() => setCardSort("customer")}>Customer</button>
+              <button className="btn btn-sm btn-ghost" onClick={() => setCardSortDir(d => d === "asc" ? "desc" : "asc")} title="Reverse order">
+                {cardSortDir === "asc" ? "↑ Asc" : "↓ Desc"}
+              </button>
+            </div>
+            <label className="muted" style={{ fontSize: 12.5, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+              <input type="checkbox" checked={showCancelled} onChange={e => setShowCancelled(e.target.checked)} />
+              Show cancelled
+            </label>
+          </React.Fragment>
+        )}
+      </div>
+
+      {viewMode === "table" && (
+        <div className="card" style={{ overflowX: "auto" }}>
+          <div className="flex items-center" style={{ justifyContent: "space-between", marginBottom: 10 }}>
+            <span className="muted" style={{ fontSize: 12.5 }}>
+              {tableRows.length} of {orders.length} orders
+              {activeFilterCount > 0 && <React.Fragment> · {activeFilterCount} column filter{activeFilterCount > 1 ? "s" : ""} active</React.Fragment>}
+            </span>
+            {activeFilterCount > 0 && <button className="btn btn-sm btn-ghost" onClick={() => setColFilters({})}>Clear all filters</button>}
+          </div>
+          <table>
+            <thead>
+              <tr>
+                {ORDERS_TABLE_COLUMNS.map(col => (
+                  <FilterHeader key={col.key} label={col.label} colKey={col.key}
+                    allValues={distinctValues[col.key]}
+                    activeSet={colFilters[col.key]}
+                    onFilterChange={(k, set) => setColFilters(f => ({ ...f, [k]: set }))}
+                    sortActive={tableSortCol === col.key} sortDir={tableSortDir}
+                    onSort={(k, dir) => { setTableSortCol(k); setTableSortDir(dir); }} />
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {tableRows.length === 0 && <tr><td colSpan={ORDERS_TABLE_COLUMNS.length} className="empty-state">No orders match the current filters.</td></tr>}
+              {tableRows.map(o => (
+                <tr key={o.id} className="clickable" onClick={() => onOpenOrder(o)}>
+                  <td>#{o.id}</td>
+                  <td>{o.customer_name || "—"}</td>
+                  <td><StatusBadge status={o.status} /></td>
+                  <td><FulfillmentBadge fulfillment={o.fulfillment} /></td>
+                  <td>{fmtDate(o.delivery_date)}</td>
+                  <td>{fmtMoney(o.total)}</td>
+                  <td>{o.payment_method || "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {viewMode === "board" && (
+      <React.Fragment>
+      <div className="kanban">
+        {columns.map(status => {
+          const colOrders = activeOrders.filter(o => o.status === status).sort(cardComparator);
+          return (
+            <div className="kanban-col" key={status}>
+              <div className="kanban-col-head">
+                <span>{STATUS_LABEL[status]}</span>
+                <span className="kanban-count">{colOrders.length}</span>
+              </div>
+              {colOrders.length === 0 && <div className="empty-state">No orders</div>}
+              {colOrders.map(o => {
+                const idx = STATUS_FLOW.indexOf(status);
+                const nextStatus = STATUS_FLOW[idx + 1];
+                return (
+                  <div className="order-card" key={o.id} onClick={() => onOpenOrder(o)}>
+                    <div className="order-card-top">
+                      <span className="order-card-id">#{o.id}</span>
+                      {o.total >= HIGH_VALUE_THRESHOLD && <span title="High value">⚡</span>}
+                    </div>
+                    <div className="order-card-name">{o.customer_name}</div>
+                    <div className="order-card-meta">
+                      <span>{fmtDate(o.delivery_date)}</span>
+                      <span>{fmtMoney(o.total)}</span>
+                    </div>
+                    <div className="order-card-meta" style={{ marginTop: 2 }}>
+                      <FulfillmentBadge fulfillment={o.fulfillment} />
+                    </div>
+                    {nextStatus && (
+                      <div className="order-card-actions">
+                        <button className="btn btn-sm btn-accent" onClick={(e) => { e.stopPropagation(); onRequestStatusChange(o, nextStatus); }}>
+                          → {STATUS_LABEL[nextStatus]}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+
+      {showCancelled && (
+        <div className="card" style={{ marginTop: 16 }}>
+          <div className="section-title">Cancelled orders</div>
+          <table>
+            <thead><tr><th>Order</th><th>Customer</th><th>Delivery</th><th>Total</th></tr></thead>
+            <tbody>
+              {orders.filter(o => o.status === "cancelled").length === 0 && <tr><td colSpan="4" className="empty-state">None</td></tr>}
+              {orders.filter(o => o.status === "cancelled").map(o => (
+                <tr key={o.id} className="clickable" onClick={() => onOpenOrder(o)}>
+                  <td>#{o.id}</td><td>{o.customer_name}</td><td>{fmtDate(o.delivery_date)}</td><td>{fmtMoney(o.total)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <div className="card" style={{ marginTop: 16 }}>
+        <div className="batch-head" style={{ cursor: "pointer", marginBottom: showArchive ? 10 : 0 }} onClick={() => setShowArchive(v => !v)}>
+          <div className="batch-head-left">
+            <span className="muted" style={{ fontSize: 12 }}>{showArchive ? "▾" : "▸"}</span>
+            <div className="batch-date">Archive — fulfilled, prior months</div>
+          </div>
+          <div className="muted" style={{ fontSize: 12.5 }}>{archivedOrders.length} orders · {fmtMoney(archiveRevenue)}</div>
+        </div>
+        {showArchive && (
+          <React.Fragment>
+            <div style={{ marginBottom: 10 }}>
+              <input placeholder="Search archived orders by customer or order #…" value={archiveQuery} onChange={e => setArchiveQuery(e.target.value)} style={{ width: 280 }} />
+            </div>
+            <table>
+              <thead><tr><th>Order</th><th>Customer</th><th>Delivery</th><th>Fulfillment</th><th>Total</th></tr></thead>
+              <tbody>
+                {archiveVisible.length === 0 && <tr><td colSpan="5" className="empty-state">No archived orders match.</td></tr>}
+                {archiveVisible.map(o => (
+                  <tr key={o.id} className="clickable" onClick={() => onOpenOrder(o)}>
+                    <td>#{o.id}</td>
+                    <td>{o.customer_name}</td>
+                    <td>{fmtDate(o.delivery_date)}</td>
+                    <td><FulfillmentBadge fulfillment={o.fulfillment} /></td>
+                    <td>{fmtMoney(o.total)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </React.Fragment>
+        )}
+      </div>
+      </React.Fragment>
+      )}
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------------
+   Customers tab
+--------------------------------------------------------------------- */
+function CustomersTab({ customers, orders, rewards }) {
+  const [query, setQuery] = useState("");
+  const [selected, setSelected] = useState(null);
+
+  const stats = useMemo(() => {
+    const byId = {}, byEmail = {};
+    customers.forEach(c => { byId[c.id] = { customer: c, orders: [], ltv: 0 }; if (c.email) byEmail[c.email.toLowerCase()] = c.id; });
+    let unlinked = 0;
+    orders.forEach(o => {
+      if (o.status === "cancelled") return;
+      let cid = o.customer_id;
+      if (!cid && o.customer_email && byEmail[o.customer_email.toLowerCase()]) cid = byEmail[o.customer_email.toLowerCase()];
+      if (cid && byId[cid]) {
+        byId[cid].orders.push(o);
+        byId[cid].ltv += Number(o.total || 0);
+      } else {
+        unlinked++;
+      }
+    });
+    return { byId, unlinked };
+  }, [customers, orders]);
+
+  const filtered = customers.filter(c =>
+    !query || (c.name || "").toLowerCase().includes(query.toLowerCase()) || (c.email || "").toLowerCase().includes(query.toLowerCase())
+  ).sort((a, b) => (stats.byId[b.id]?.ltv || 0) - (stats.byId[a.id]?.ltv || 0));
+
+  return (
+    <div>
+      <div className="flex items-center gap-8" style={{ marginBottom: 14 }}>
+        <input placeholder="Search customers…" value={query} onChange={e => setQuery(e.target.value)} style={{ width: 260 }} />
+        {stats.unlinked > 0 && <span className="muted" style={{ fontSize: 12 }}>{stats.unlinked} order(s) not linked to a saved customer record</span>}
+      </div>
+      <div className="card">
+        <table>
+          <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Fulfillment</th><th>Orders</th><th>Lifetime value</th><th>Last order</th></tr></thead>
+          <tbody>
+            {filtered.length === 0 && <tr><td colSpan="7" className="empty-state">No customers found.</td></tr>}
+            {filtered.map(c => {
+              const s = stats.byId[c.id] || { orders: [], ltv: 0 };
+              const last = s.orders.length ? s.orders.reduce((a, b) => new Date(a.created_at) > new Date(b.created_at) ? a : b) : null;
+              return (
+                <tr key={c.id} className="clickable" onClick={() => setSelected(c)}>
+                  <td>{c.name}</td>
+                  <td>{c.email}</td>
+                  <td>{c.phone || "—"}</td>
+                  <td>{c.fulfillment_preference === "delivery" ? "Delivery" : "Pickup"}</td>
+                  <td>{s.orders.length}</td>
+                  <td>{fmtMoney(s.ltv)}</td>
+                  <td>{last ? fmtDate(last.delivery_date) : "—"}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {selected && (
+        <div className="drawer-overlay" onClick={() => setSelected(null)}>
+          <div className="drawer" onClick={e => e.stopPropagation()}>
+            <div className="drawer-head">
+              <div>
+                <div style={{ fontSize: 17, fontWeight: 700 }}>{selected.name}</div>
+                <div className="muted" style={{ fontSize: 12 }}>{selected.email}</div>
+              </div>
+              <button className="drawer-close" onClick={() => setSelected(null)}>✕</button>
+            </div>
+            <div className="field-row"><span className="field-label">Phone</span><span className="field-value">{selected.phone || "—"}</span></div>
+            <div className="field-row"><span className="field-label">Fulfillment preference</span><span className="field-value">{selected.fulfillment_preference || "pickup"}</span></div>
+            {selected.delivery_location && <div className="field-row"><span className="field-label">Delivery location</span><span className="field-value">{selected.delivery_location}</span></div>}
+            <div className="field-row"><span className="field-label">Lifetime value</span><span className="field-value">{fmtMoney((stats.byId[selected.id] || {}).ltv || 0)}</span></div>
+            {(() => {
+              // $10 spent = 1 point, matching check_punch_card_reward in Supabase.
+              const fulfilledSpend = (stats.byId[selected.id]?.orders || [])
+                .filter(o => o.status === "fulfilled")
+                .reduce((s, o) => s + Number(o.total || 0), 0);
+              const points = Math.floor(fulfilledSpend / 10);
+              const pointsIntoCycle = points % 10;
+              const dollarsToNext = 100 - (fulfilledSpend % 100);
+              const hasUnredeemed = (rewards || []).some(r => r.customer_id === selected.id && !r.redeemed);
+              return (
+                <div className="field-row">
+                  <span className="field-label">Punch-card progress</span>
+                  <span className="field-value">
+                    {hasUnredeemed ? "🎁 Reward ready to redeem" : `${pointsIntoCycle} / 10 pts ($${dollarsToNext.toFixed(0)} to next reward)`}
+                  </span>
+                </div>
+              );
+            })()}
+            <div className="divider" />
+            <div className="section-title">Order history</div>
+            {(stats.byId[selected.id]?.orders || []).length === 0 && <div className="empty-state">No orders yet.</div>}
+            {(stats.byId[selected.id]?.orders || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map(o => (
+              <div key={o.id} className="field-row">
+                <span className="field-label">#{o.id} · {fmtDate(o.delivery_date)}</span>
+                <span className="field-value">{fmtMoney(o.total)} <StatusBadge status={o.status} /></span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------------
+   Products tab
+--------------------------------------------------------------------- */
+function ProductsTab({ products, pushToast, refetch }) {
+  const [edits, setEdits] = useState({});
+  const [saving, setSaving] = useState({});
+
+  const getVal = (p, field) => edits[p.id]?.[field] !== undefined ? edits[p.id][field] : p[field];
+  const setVal = (id, field, value) => setEdits(e => ({ ...e, [id]: { ...e[id], [field]: value } }));
+  const isDirty = (p) => !!edits[p.id];
+
+  const save = async (p) => {
+    const patch = edits[p.id];
+    if (!patch) return;
+    setSaving(s => ({ ...s, [p.id]: true }));
+    await ensureFreshSession();
+    const { error } = await sb.from("products").update({
+      name: patch.name !== undefined ? patch.name : p.name,
+      base_price: patch.base_price !== undefined ? Number(patch.base_price) : p.base_price,
+      cost_of_goods: patch.cost_of_goods !== undefined ? Number(patch.cost_of_goods) : p.cost_of_goods,
+      stock_qty: patch.stock_qty !== undefined ? Number(patch.stock_qty) : p.stock_qty
+    }).eq("id", p.id);
+    setSaving(s => ({ ...s, [p.id]: false }));
+    if (error) { pushToast("Save failed: " + error.message, "err"); return; }
+    setEdits(e => { const n = { ...e }; delete n[p.id]; return n; });
+    pushToast("Saved " + (patch.name || p.name), "ok");
+    refetch();
+  };
+  const reset = (id) => setEdits(e => { const n = { ...e }; delete n[id]; return n; });
+
+  return (
+    <div className="card">
+      <table>
+        <thead><tr><th>Name</th><th>Description</th><th>Price</th><th>COGS</th><th>Margin</th><th>Stock</th><th></th></tr></thead>
+        <tbody>
+          {products.length === 0 && <tr><td colSpan="7" className="empty-state">No products yet.</td></tr>}
+          {products.map(p => {
+            const price = Number(getVal(p, "base_price") || 0);
+            const cogs = Number(getVal(p, "cost_of_goods") || 0);
+            const margin = price - cogs;
+            const marginPct = price > 0 ? (margin / price * 100) : 0;
+            return (
+              <tr key={p.id}>
+                <td><input value={getVal(p, "name") || ""} onChange={e => setVal(p.id, "name", e.target.value)} style={{ width: 140 }} /></td>
+                <td className="muted" style={{ maxWidth: 220 }}>{p.description || "—"}</td>
+                <td><input type="number" step="0.01" value={getVal(p, "base_price") ?? 0} onChange={e => setVal(p.id, "base_price", e.target.value)} /></td>
+                <td><input type="number" step="0.01" value={getVal(p, "cost_of_goods") ?? 0} onChange={e => setVal(p.id, "cost_of_goods", e.target.value)} /></td>
+                <td className="mono">{fmtMoney(margin)} <span className="muted">({marginPct.toFixed(0)}%)</span></td>
+                <td><input type="number" value={getVal(p, "stock_qty") ?? 0} onChange={e => setVal(p.id, "stock_qty", e.target.value)} style={{ width: 70 }} /></td>
+                <td>
+                  {isDirty(p) && (
+                    <div className="flex gap-8">
+                      <button className="btn btn-sm btn-accent" disabled={saving[p.id]} onClick={() => save(p)}>{saving[p.id] ? "Saving…" : "Save"}</button>
+                      <button className="btn btn-sm btn-ghost" onClick={() => reset(p.id)}>Reset</button>
+                    </div>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------------
+   Alerts tab
+--------------------------------------------------------------------- */
+function AlertsTab({ alerts, orders, onOpenOrder, pushToast, refetch }) {
+  const [showResolved, setShowResolved] = useState(false);
+  const sorted = [...alerts].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  const visible = showResolved ? sorted : sorted.filter(a => !a.resolved);
+
+  const resolve = async (a) => {
+    await ensureFreshSession();
+    const { error } = await sb.from("alerts").update({ resolved: true }).eq("id", a.id);
+    if (error) { pushToast("Couldn't resolve: " + error.message, "err"); return; }
+    pushToast("Alert resolved", "ok");
+    refetch();
+  };
+
+  return (
+    <div>
+      <div className="flex items-center" style={{ justifyContent: "flex-end", marginBottom: 12 }}>
+        <label className="muted" style={{ fontSize: 12.5, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+          <input type="checkbox" checked={showResolved} onChange={e => setShowResolved(e.target.checked)} />
+          Show resolved
+        </label>
+      </div>
+      <div className="card">
+        {visible.length === 0 && <div className="empty-state">Nothing needs your attention.</div>}
+        {visible.map(a => {
+          const order = orders.find(o => o.id === a.order_id);
+          return (
+            <div key={a.id} className="field-row" style={{ alignItems: "center" }}>
+              <div>
+                <span className={"badge " + (a.type === "high_value" ? "badge-highvalue" : a.type === "reward_reminder" ? "badge-ready" : "badge-muted")}>
+                  {a.type === "reward_reminder" ? "🎁 reward reminder" : a.type === "high_value" ? "⚡ high value" : a.type}
+                </span>
+                <span style={{ marginLeft: 10 }}>{(a.message || "").replace(/\s*\[milestone:\d+\]$/, "")}</span>
+                {order && <a style={{ marginLeft: 10, cursor: "pointer", fontSize: 12 }} onClick={() => onOpenOrder(order)}>view order →</a>}
+                <div className="muted" style={{ fontSize: 11, marginTop: 3 }}>{timeAgo(a.created_at)}</div>
+              </div>
+              <div>
+                {a.resolved ? <span className="badge badge-muted">Resolved</span> :
+                  <button className="btn btn-sm" onClick={() => resolve(a)}>Mark resolved</button>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------------
+   Rewards tab — punch-card loyalty. Earning is automatic (see the
+   check_punch_card_reward trigger); redemption always happens from an
+   order's drawer so a redeemed reward is tied to the discount/comp that
+   was actually applied, not just a checkbox with no financial record.
+--------------------------------------------------------------------- */
+function RewardsTab({ rewards, customers, orders, onOpenOrder, pushToast, refetch }) {
+  const [showRedeemed, setShowRedeemed] = useState(false);
+  const [undoing, setUndoing] = useState({});
+  const byCustomer = {};
+  customers.forEach(c => { byCustomer[c.id] = c; });
+
+  const sorted = [...rewards].sort((a, b) => new Date(b.earned_at) - new Date(a.earned_at));
+  const visible = showRedeemed ? sorted : sorted.filter(r => !r.redeemed);
+
+  // Undoing a redemption only resets the reward row itself (redeemed,
+  // redeemed_at, redeemed_order_id) so it shows as available again — it does
+  // NOT automatically reverse whatever discount was applied to the order it
+  // was redeemed against. If that order already shipped with a discount
+  // applied, fix/remove that separately in the order's drawer if needed.
+  const unredeem = async (r) => {
+    setUndoing(u => ({ ...u, [r.id]: true }));
+    await ensureFreshSession();
+    const { error } = await sb.from("customer_rewards").update({
+      redeemed: false, redeemed_at: null, redeemed_order_id: null
+    }).eq("id", r.id);
+    setUndoing(u => ({ ...u, [r.id]: false }));
+    if (error) { pushToast("Couldn't undo redemption: " + error.message, "err"); return; }
+    pushToast("Reward marked unredeemed again — remember any discount on the original order is still there unless you remove it separately.", "ok");
+    refetch();
+  };
+
+  return (
+    <div>
+      <div className="flex items-center" style={{ justifyContent: "flex-end", marginBottom: 12 }}>
+        <label className="muted" style={{ fontSize: 12.5, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+          <input type="checkbox" checked={showRedeemed} onChange={e => setShowRedeemed(e.target.checked)} />
+          Show redeemed
+        </label>
+      </div>
+      <div className="card">
+        {visible.length === 0 && <div className="empty-state">No unredeemed rewards right now — every $10 of fulfilled spend earns a point, and 10 points ($100 spent) earns a reward automatically.</div>}
+        {visible.map(r => {
+          const customer = byCustomer[r.customer_id];
+          const redeemedOrder = r.redeemed_order_id ? orders.find(o => o.id === r.redeemed_order_id) : null;
+          return (
+            <div key={r.id} className="field-row" style={{ alignItems: "center" }}>
+              <div>
+                <span className={"badge " + (r.redeemed ? "badge-muted" : "badge-ready")}>{r.redeemed ? "Redeemed" : "🎁 Unredeemed"}</span>
+                <span style={{ marginLeft: 10, fontWeight: 600 }}>{customer ? customer.name : "Unknown customer"}</span>
+                <span className="muted" style={{ marginLeft: 8 }}>— {r.milestone} pts (${r.milestone * 10} spent)</span>
+                <div className="muted" style={{ fontSize: 11, marginTop: 3 }}>
+                  Earned {timeAgo(r.earned_at)}
+                  {r.redeemed && redeemedOrder && <React.Fragment> · applied on <a style={{ cursor: "pointer" }} onClick={() => onOpenOrder(redeemedOrder)}>order #{redeemedOrder.id}</a></React.Fragment>}
+                </div>
+              </div>
+              {!r.redeemed && customer && (
+                <div>
+                  <span className="muted" style={{ fontSize: 11.5 }}>Redeem from the customer's next order</span>
+                </div>
+              )}
+              {r.redeemed && (
+                <button className="btn btn-sm btn-ghost" disabled={undoing[r.id]} onClick={() => unredeem(r)}>
+                  {undoing[r.id] ? "Undoing…" : "Undo redemption"}
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------------
+   App shell
+--------------------------------------------------------------------- */
+const TABS = [
+  { key: "dashboard", label: "Dashboard", icon: "📊" },
+  { key: "batches", label: "Tuesday Batches", icon: "📅" },
+  { key: "orders", label: "Orders", icon: "🧺" },
+  { key: "customers", label: "Customers", icon: "👥" },
+  { key: "products", label: "Products", icon: "🍞" },
+  { key: "rewards", label: "Rewards", icon: "🎁" },
+  { key: "alerts", label: "Alerts", icon: "🔔" }
+];
+
+function Dashboard({ session }) {
+  const [toasts, pushToast] = useToasts();
+  const { products, customers, orders, alerts, rewards, loading, connected, refetch } = useBakeryData(msg => pushToast(msg, "err"));
+  const [tab, setTab] = useState("dashboard");
+  const [openOrder, setOpenOrder] = useState(null);
+  const [showNewOrder, setShowNewOrder] = useState(false);
+  const [showChangePw, setShowChangePw] = useState(false);
+  const [pendingStatusChange, setPendingStatusChange] = useState(null); // { order, newStatus }
+
+  const unresolvedCount = alerts.filter(a => !a.resolved).length;
+  const unredeemedRewardCount = rewards.filter(r => !r.redeemed).length;
+
+  // Opens the reason modal rather than writing immediately — the actual
+  // write happens in commitStatusChange once a reason is confirmed.
+  const requestStatusChange = (order, newStatus) => {
+    if (newStatus === order.status) return;
+    setPendingStatusChange({ order, newStatus });
+  };
+
+  // Goes through the update_order_status RPC (not a direct table update) so
+  // the reason gets attached to the trigger-backed status log — see the
+  // order_status_log table / update_order_status function in Supabase.
+  const commitStatusChange = async (reason) => {
+    if (!pendingStatusChange) return;
+    const { order, newStatus } = pendingStatusChange;
+    await ensureFreshSession();
+    const { error } = await sb.rpc("update_order_status", {
+      p_order_id: order.id, p_new_status: newStatus, p_reason: reason
+    });
+    if (error) { pushToast("Couldn't update status: " + error.message, "err"); return; }
+    pushToast("Order #" + order.id + " → " + STATUS_LABEL[newStatus], "ok");
+    setOpenOrder(o => o && o.id === order.id ? { ...o, status: newStatus } : o);
+    setPendingStatusChange(null);
+
+    // Customer "order ready" email — fires the moment you mark it ready,
+    // right from this same click. Silently skipped if you haven't filled
+    // in EMAILJS_ORDER_READY_TEMPLATE_ID yet, or if the order has no email
+    // on file (e.g. phone/in-person orders you didn't capture an email for).
+    if (newStatus === "ready" && EMAILJS_ORDER_READY_TEMPLATE_ID && order.customer_email && window.emailjs) {
+      const fulfillmentNote = order.fulfillment === "delivery"
+        ? `We'll deliver it to ${order.delivery_location || "your school"} on the next run.`
+        : "Come by for pickup whenever works for you.";
+      emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_ORDER_READY_TEMPLATE_ID, {
+        // The template's "To Email" field is {{customer_email}} and "Reply
+        // To" is {{email}} (checked directly in the EmailJS template
+        // editor) — sending to_email alone left both unresolved, which is
+        // why nothing even reached EmailJS. customer_email/email cover
+        // what the template actually references; to_email stays too in
+        // case the template gets edited later to expect it.
+        to_email: order.customer_email,
+        customer_email: order.customer_email,
+        email: order.customer_email,
+        customer_name: order.customer_name,
+        order_id: order.id,
+        fulfillment_note: fulfillmentNote,
+        total: Number(order.total || 0).toFixed(2)
+      }).catch(e => console.warn("Order-ready email failed:", e));
+    }
+
+    refetch();
+  };
+
+  // keep the open drawer's order object fresh as data refetches
+  useEffect(() => {
+    if (openOrder) {
+      const fresh = orders.find(o => o.id === openOrder.id);
+      if (fresh) setOpenOrder(fresh);
+    }
+    // eslint-disable-next-line
+  }, [orders]);
+
+  // Customer "you earned a reward" email — fires automatically the moment a
+  // reward appears, no manual step. Rewards are earned by a database
+  // trigger (not a click here), so we detect it by watching for reward rows
+  // that haven't had their email sent yet (earned_email_sent = false) and
+  // send + mark them one at a time. The `sendingRef` guard stops the same
+  // reward from being sent twice if this effect re-runs (realtime update,
+  // refetch, etc.) before the DB write marking it sent has landed.
+  const sendingRewardEmails = useRef(new Set());
+  useEffect(() => {
+    if (!EMAILJS_REWARD_EARNED_TEMPLATE_ID || !window.emailjs) return;
+    const unsent = rewards.filter(r => !r.earned_email_sent && !sendingRewardEmails.current.has(r.id));
+    unsent.forEach(async (r) => {
+      const customer = customers.find(c => c.id === r.customer_id);
+      if (!customer || !customer.email) return;
+      sendingRewardEmails.current.add(r.id);
+      try {
+        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_REWARD_EARNED_TEMPLATE_ID, {
+          to_email: customer.email,
+          customer_name: customer.name,
+          milestone: r.milestone,
+          dollars_spent: r.milestone * 10
+        });
+        await sb.from("customer_rewards").update({ earned_email_sent: true }).eq("id", r.id);
+        refetch();
+      } catch (e) {
+        console.warn("Reward-earned email failed:", e);
+        sendingRewardEmails.current.delete(r.id);
+      }
+    });
+    // eslint-disable-next-line
+  }, [rewards, customers]);
+
+  if (loading) return <div className="loading-screen">Loading RANCH Bakery dashboard…</div>;
+
+  return (
+    <div className="app-shell">
+      <div className="sidebar">
+        <div className="brand">
+          <div className="brand-title">RANCH Bakery</div>
+          <div className="brand-sub">Owner Dashboard</div>
+        </div>
+        {TABS.map(t => (
+          <div key={t.key} className={"nav-item " + (tab === t.key ? "active" : "")} onClick={() => setTab(t.key)}>
+            <span>{t.icon}</span><span>{t.label}</span>
+            {t.key === "alerts" && unresolvedCount > 0 && <span className="nav-badge">{unresolvedCount}</span>}
+            {t.key === "rewards" && unredeemedRewardCount > 0 && <span className="nav-badge" style={{ background: "var(--green)" }}>{unredeemedRewardCount}</span>}
+          </div>
+        ))}
+        <div style={{ marginTop: "auto" }}>
+          <div className="muted" style={{ fontSize: 11.5, padding: "0 12px", marginBottom: 6, wordBreak: "break-all" }}>{session.user.email}</div>
+          <div className="nav-item" onClick={() => setShowChangePw(true)}><span>🔑</span><span>Change password</span></div>
+          <div className="nav-item" onClick={() => sb.auth.signOut()}><span>🚪</span><span>Sign out</span></div>
+          <div className="conn-status">
+            <span className={"dot " + (connected ? "" : "off")}></span>
+            {connected ? "Live" : "Reconnecting…"}
+          </div>
+        </div>
+      </div>
+
+      <div className="main">
+        <div className="page-header">
+          <div>
+            <div className="page-title">{TABS.find(t => t.key === tab).label}</div>
+            <div className="page-sub">
+              {tab === "dashboard" && "This week at a glance"}
+              {tab === "batches" && "Orders grouped by Tuesday delivery date — everything you need to bake"}
+              {tab === "orders" && "Click a card to update status or view details"}
+              {tab === "customers" && "Order history and lifetime value"}
+              {tab === "products" && "Edit pricing, cost of goods, and stock"}
+              {tab === "rewards" && "Punch-card loyalty — $10 spent = 1 point, 10 points earns a reward"}
+              {tab === "alerts" && "High-value orders and flagged items"}
+            </div>
+          </div>
+          <div className="flex gap-8">
+            <button className="btn btn-accent" onClick={() => setShowNewOrder(true)}>+ New order</button>
+            <button className="btn" onClick={refetch}>↻ Refresh</button>
+          </div>
+        </div>
+
+        {tab === "dashboard" && <DashboardTab orders={orders} customers={customers} products={products} alerts={alerts} onOpenOrder={setOpenOrder} />}
+        {tab === "batches" && <BatchTab orders={orders} onOpenOrder={setOpenOrder} />}
+        {tab === "orders" && <OrdersTab orders={orders} onOpenOrder={setOpenOrder} onRequestStatusChange={requestStatusChange} />}
+        {tab === "customers" && <CustomersTab customers={customers} orders={orders} rewards={rewards} />}
+        {tab === "products" && <ProductsTab products={products} pushToast={pushToast} refetch={refetch} />}
+        {tab === "rewards" && <RewardsTab rewards={rewards} customers={customers} orders={orders} onOpenOrder={setOpenOrder} pushToast={pushToast} refetch={refetch} />}
+        {tab === "alerts" && <AlertsTab alerts={alerts} orders={orders} onOpenOrder={setOpenOrder} pushToast={pushToast} refetch={refetch} />}
+      </div>
+
+      {openOrder && (
+        <OrderDrawer order={openOrder} alerts={alerts} customers={customers} rewards={rewards} pushToast={pushToast} refetch={refetch}
+          onClose={() => setOpenOrder(null)} onRequestStatusChange={requestStatusChange} />
+      )}
+      {pendingStatusChange && (
+        <StatusChangeModal
+          order={pendingStatusChange.order}
+          newStatus={pendingStatusChange.newStatus}
+          onConfirm={commitStatusChange}
+          onCancel={() => setPendingStatusChange(null)}
+        />
+      )}
+      {showNewOrder && (
+        <NewOrderModal
+          customers={customers}
+          products={products}
+          pushToast={pushToast}
+          onClose={() => setShowNewOrder(false)}
+          onCreated={() => { setShowNewOrder(false); refetch(); }}
+        />
+      )}
+      {showChangePw && (
+        <ChangePasswordModal pushToast={pushToast} session={session} onClose={() => setShowChangePw(false)} />
+      )}
+      <Toasts toasts={toasts} />
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------------
+   Auth: login screen + change password
+--------------------------------------------------------------------- */
+function LoginScreen({ pushToast }) {
+  const [email, setEmail] = useState("ranchmarq@gmail.com");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    setLoading(false);
+    if (error) pushToast("Sign in failed: " + error.message, "err");
+  };
+
+  return (
+    <div className="loading-screen" style={{ flexDirection: "column", gap: 16 }}>
+      <form className="card" style={{ width: 320 }} onSubmit={submit}>
+        <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 2, color: "var(--text)" }}>RANCH Bakery</div>
+        <div className="muted" style={{ fontSize: 12, marginBottom: 18 }}>Owner dashboard — sign in</div>
+        <div style={{ marginBottom: 10 }}>
+          <div className="field-label" style={{ marginBottom: 4 }}>Email</div>
+          <input style={{ width: "100%" }} type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+        </div>
+        <div style={{ marginBottom: 16 }}>
+          <div className="field-label" style={{ marginBottom: 4 }}>Password</div>
+          <input style={{ width: "100%" }} type="password" value={password} onChange={e => setPassword(e.target.value)} required autoFocus />
+        </div>
+        <button className="btn btn-accent" style={{ width: "100%" }} disabled={loading} type="submit">
+          {loading ? "Signing in…" : "Sign in"}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function ChangePasswordModal({ onClose, pushToast, session }) {
+  const [currentPw, setCurrentPw] = useState("");
+  const [pw1, setPw1] = useState("");
+  const [pw2, setPw2] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (pw1.length < 8) { pushToast("Password must be at least 8 characters", "err"); return; }
+    if (pw1 !== pw2) { pushToast("Passwords don't match", "err"); return; }
+    setSaving(true);
+    // This project has "require current password when changing password" enabled
+    // in Auth settings, so a plain updateUser({password}) call is rejected with
+    // current_password_required. Supabase's fix is to pass current_password
+    // (and email) alongside the new password.
+    const { error } = await sb.auth.updateUser({
+      email: session.user.email,
+      current_password: currentPw,
+      password: pw1
+    });
+    setSaving(false);
+    if (error) { pushToast("Couldn't update password: " + error.message, "err"); return; }
+    pushToast("Password updated", "ok");
+    onClose();
+  };
+
+  return (
+    <div className="drawer-overlay" onClick={onClose}>
+      <form className="card" style={{ width: 340 }} onClick={e => e.stopPropagation()} onSubmit={submit}>
+        <div className="drawer-head" style={{ marginBottom: 12 }}>
+          <div style={{ fontSize: 15, fontWeight: 700 }}>Change password</div>
+          <button type="button" className="drawer-close" onClick={onClose}>✕</button>
+        </div>
+        <div style={{ marginBottom: 10 }}>
+          <div className="field-label" style={{ marginBottom: 4 }}>Current password</div>
+          <input style={{ width: "100%" }} type="password" value={currentPw} onChange={e => setCurrentPw(e.target.value)} required autoFocus />
+        </div>
+        <div style={{ marginBottom: 10 }}>
+          <div className="field-label" style={{ marginBottom: 4 }}>New password</div>
+          <input style={{ width: "100%" }} type="password" value={pw1} onChange={e => setPw1(e.target.value)} required minLength={8} />
+        </div>
+        <div style={{ marginBottom: 16 }}>
+          <div className="field-label" style={{ marginBottom: 4 }}>Confirm new password</div>
+          <input style={{ width: "100%" }} type="password" value={pw2} onChange={e => setPw2(e.target.value)} required minLength={8} />
+        </div>
+        <button className="btn btn-accent" style={{ width: "100%" }} disabled={saving} type="submit">{saving ? "Saving…" : "Update password"}</button>
+      </form>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------------
+   New order modal (manual / phone / in-person orders)
+--------------------------------------------------------------------- */
+function NewOrderModal({ customers, products, onClose, onCreated, pushToast }) {
+  const [customerMode, setCustomerMode] = useState("existing"); // existing | new
+  const [customerId, setCustomerId] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [fulfillment, setFulfillment] = useState("pickup");
+  const [deliveryLocation, setDeliveryLocation] = useState("");
+  const [requestedDate, setRequestedDate] = useState(isoDateOnly(new Date()));
+  const [deliveryDate, setDeliveryDate] = useState(isoDateOnly(computeAssignedTuesday(new Date())));
+  const [paymentMethod, setPaymentMethod] = useState("Cash");
+  const [notes, setNotes] = useState("");
+  const [items, setItems] = useState([{ product_id: "", quantity: 1, unit_price: 0 }]);
+  const [saving, setSaving] = useState(false);
+
+  const selectedCustomer = customers.find(c => String(c.id) === String(customerId));
+  const deliveryDateIsTuesday = deliveryDate ? toLocalDate(deliveryDate).getDay() === 2 : false;
+
+  const setItem = (idx, patch) => setItems(list => list.map((it, i) => i === idx ? { ...it, ...patch } : it));
+  const addItem = () => setItems(list => [...list, { product_id: "", quantity: 1, unit_price: 0 }]);
+  const removeItem = (idx) => setItems(list => list.filter((_, i) => i !== idx));
+
+  const onPickProduct = (idx, productId) => {
+    const p = products.find(pr => String(pr.id) === String(productId));
+    setItem(idx, { product_id: productId, unit_price: p ? Number(p.base_price || 0) : 0 });
+  };
+
+  const lineItems = items
+    .filter(it => it.product_id)
+    .map(it => {
+      const p = products.find(pr => String(pr.id) === String(it.product_id));
+      const qty = Number(it.quantity || 0);
+      const price = Number(it.unit_price || 0);
+      return { product: p, quantity: qty, unit_price: price, subtotal: qty * price };
+    });
+  const total = lineItems.reduce((s, it) => s + it.subtotal, 0);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    const customerName = customerMode === "existing" ? (selectedCustomer?.name || "") : name;
+    const customerEmail = customerMode === "existing" ? (selectedCustomer?.email || "") : email;
+    const customerPhone = customerMode === "existing" ? (selectedCustomer?.phone || "") : phone;
+
+    if (!customerName.trim()) { pushToast("Customer name is required", "err"); return; }
+    if (lineItems.length === 0) { pushToast("Add at least one item", "err"); return; }
+    if (fulfillment === "delivery" && !deliveryLocation.trim()) { pushToast("Delivery location is required for delivery orders", "err"); return; }
+
+    setSaving(true);
+    try {
+      await ensureFreshSession();
+      let linkedCustomerId = customerMode === "existing" ? (selectedCustomer?.id || null) : null;
+
+      if (customerMode === "new" && customerEmail.trim()) {
+        // avoid creating a duplicate if this email already exists
+        const existing = customers.find(c => (c.email || "").toLowerCase() === customerEmail.trim().toLowerCase());
+        if (existing) {
+          linkedCustomerId = existing.id;
+        } else {
+          const { data: newCust, error: custErr } = await sb.from("customers").insert({
+            name: customerName.trim(),
+            email: customerEmail.trim(),
+            phone: customerPhone.trim() || null,
+            fulfillment_preference: fulfillment,
+            delivery_location: fulfillment === "delivery" ? deliveryLocation.trim() : null
+          }).select().single();
+          if (custErr) throw custErr;
+          linkedCustomerId = newCust.id;
+        }
+      }
+
+      const { data: newOrder, error: orderErr } = await sb.from("orders").insert({
+        customer_id: linkedCustomerId,
+        customer_name: customerName.trim(),
+        customer_email: customerEmail.trim() || null,
+        customer_phone: customerPhone.trim() || null,
+        fulfillment,
+        delivery_location: fulfillment === "delivery" ? deliveryLocation.trim() : null,
+        requested_date: requestedDate || null,
+        delivery_date: deliveryDate || null,
+        notes: notes.trim() || null,
+        total,
+        status: "pending",
+        payment_method: paymentMethod
+      }).select().single();
+      if (orderErr) throw orderErr;
+
+      const itemRows = lineItems.map(it => ({
+        order_id: newOrder.id,
+        product_id: it.product.id,
+        product_name: it.product.name,
+        quantity: it.quantity,
+        unit_price: it.unit_price,
+        subtotal: it.subtotal
+      }));
+      const { error: itemsErr } = await sb.from("order_items").insert(itemRows);
+      if (itemsErr) throw itemsErr;
+
+      pushToast("Order #" + newOrder.id + " created", "ok");
+      onCreated();
+    } catch (err) {
+      pushToast("Couldn't create order: " + err.message, "err");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="drawer-overlay" onClick={onClose}>
+      <div className="drawer" style={{ width: 520 }} onClick={e => e.stopPropagation()}>
+        <div className="drawer-head">
+          <div style={{ fontSize: 17, fontWeight: 700 }}>New order</div>
+          <button className="drawer-close" onClick={onClose}>✕</button>
+        </div>
+        <div className="muted" style={{ fontSize: 12, marginBottom: 14 }}>For phone-in or in-person orders. Online orders should still come through your storefront.</div>
+
+        <form onSubmit={submit}>
+          <div className="section-title">Customer</div>
+          <div className="flex gap-8" style={{ marginBottom: 10 }}>
+            <button type="button" className={"btn btn-sm " + (customerMode === "existing" ? "btn-accent" : "btn-ghost")} onClick={() => setCustomerMode("existing")}>Existing customer</button>
+            <button type="button" className={"btn btn-sm " + (customerMode === "new" ? "btn-accent" : "btn-ghost")} onClick={() => setCustomerMode("new")}>New customer</button>
+          </div>
+
+          {customerMode === "existing" ? (
+            <select style={{ width: "100%", marginBottom: 12 }} value={customerId} onChange={e => setCustomerId(e.target.value)} required>
+              <option value="">Select a customer…</option>
+              {customers.map(c => <option key={c.id} value={c.id}>{c.name} — {c.email}</option>)}
+            </select>
+          ) : (
+            <div className="grid grid-3" style={{ marginBottom: 12 }}>
+              <input placeholder="Name" value={name} onChange={e => setName(e.target.value)} required style={{ width: "100%" }} />
+              <input placeholder="Email" type="email" value={email} onChange={e => setEmail(e.target.value)} style={{ width: "100%" }} />
+              <input placeholder="Phone" value={phone} onChange={e => setPhone(e.target.value)} style={{ width: "100%" }} />
+            </div>
+          )}
+
+          <div className="section-title">Fulfillment</div>
+          <div className="flex gap-8" style={{ marginBottom: 10 }}>
+            <button type="button" className={"btn btn-sm " + (fulfillment === "pickup" ? "btn-accent" : "btn-ghost")} onClick={() => setFulfillment("pickup")}>🏠 Pickup</button>
+            <button type="button" className={"btn btn-sm " + (fulfillment === "delivery" ? "btn-accent" : "btn-ghost")} onClick={() => setFulfillment("delivery")}>🚗 Delivery (school teachers only)</button>
+          </div>
+          {fulfillment === "delivery" && (
+            <select value={deliveryLocation} onChange={e => setDeliveryLocation(e.target.value)} style={{ width: "100%", marginBottom: 12 }} required>
+              <option value="">Select a school…</option>
+              {SCHOOLS.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          )}
+
+          <div className="grid grid-3" style={{ marginBottom: 4 }}>
+            <div>
+              <div className="field-label" style={{ marginBottom: 4 }}>Requested date</div>
+              <input type="date" value={requestedDate} onChange={e => setRequestedDate(e.target.value)} style={{ width: "100%" }} />
+            </div>
+            <div>
+              <div className="field-label" style={{ marginBottom: 4 }}>Delivery (Tuesday)</div>
+              <input type="date" value={deliveryDate} onChange={e => setDeliveryDate(e.target.value)} style={{ width: "100%" }} />
+            </div>
+            <div>
+              <div className="field-label" style={{ marginBottom: 4 }}>Payment method</div>
+              <select style={{ width: "100%" }} value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)}>
+                <option>Cash</option>
+                <option>Apple Pay</option>
+                <option>Venmo</option>
+                <option>Comp / Reward</option>
+              </select>
+            </div>
+          </div>
+          {deliveryDate && !deliveryDateIsTuesday && (
+            <div className="muted" style={{ fontSize: 11.5, color: "var(--amber)", marginBottom: 8 }}>⚠ This date isn't a Tuesday — pickup/delivery normally only happens on Tuesdays.</div>
+          )}
+
+          <div className="divider" />
+          <div className="section-title">Items</div>
+          {items.map((it, idx) => (
+            <div key={idx} className="flex gap-8 items-center" style={{ marginBottom: 8 }}>
+              <select style={{ flex: 1 }} value={it.product_id} onChange={e => onPickProduct(idx, e.target.value)} required>
+                <option value="">Select product…</option>
+                {products.map(p => <option key={p.id} value={p.id}>{p.name} — {fmtMoney(p.base_price)}</option>)}
+              </select>
+              <input type="number" min="1" value={it.quantity} onChange={e => setItem(idx, { quantity: e.target.value })} style={{ width: 60 }} />
+              <input type="number" step="0.01" value={it.unit_price} onChange={e => setItem(idx, { unit_price: e.target.value })} style={{ width: 80 }} />
+              <button type="button" className="btn btn-sm btn-ghost" onClick={() => removeItem(idx)} disabled={items.length === 1}>✕</button>
+            </div>
+          ))}
+          <button type="button" className="btn btn-sm" onClick={addItem} style={{ marginBottom: 12 }}>+ Add item</button>
+
+          <div className="flex" style={{ justifyContent: "flex-end", fontWeight: 700, marginBottom: 12 }}>Total: {fmtMoney(total)}</div>
+
+          <div style={{ marginBottom: 16 }}>
+            <div className="field-label" style={{ marginBottom: 4 }}>Notes</div>
+            <textarea style={{ width: "100%" }} rows="2" value={notes} onChange={e => setNotes(e.target.value)} />
+          </div>
+
+          <button className="btn btn-accent" style={{ width: "100%" }} disabled={saving} type="submit">{saving ? "Creating…" : "Create order"}</button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------------
+   ErrorBoundary — without this, any uncaught error while rendering (e.g.
+   a data shape from the DB the UI doesn't expect) unmounts the whole tree
+   and leaves #root empty with no clue why. This catches it and shows the
+   actual error so a blank screen always comes with an explanation.
+--------------------------------------------------------------------- */
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(error) { return { error }; }
+  componentDidCatch(error, info) { console.error("Dashboard render error:", error, info); }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ padding: 40, maxWidth: 640, margin: "60px auto", fontFamily: "-apple-system,Segoe UI,Roboto,sans-serif", color: "#E8EAF0" }}>
+          <h2 style={{ marginTop: 0 }}>Something broke while loading the dashboard</h2>
+          <p style={{ color: "#8A91A6" }}>This is a bug, not a connection problem — the app started but hit an error rendering your data. Reloading may not fix it. Screenshot this and send it over.</p>
+          <p style={{ fontFamily: "monospace", fontSize: 12.5, color: "#F5A623", background: "#181C25", padding: 12, borderRadius: 8, whiteSpace: "pre-wrap" }}>
+            {String(this.state.error && this.state.error.message || this.state.error)}
+          </p>
+          <button className="btn" style={{ marginTop: 8 }} onClick={() => window.location.reload()}>Reload</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Top-level App: auth gate
+--------------------------------------------------------------------- */
+function App() {
+  const [session, setSession] = useState(undefined); // undefined = checking, null = signed out
+  const [authToasts, pushAuthToast] = useToasts();
+
+  useEffect(() => {
+    sb.auth.getSession().then(({ data }) => setSession(data.session));
+    const { data: sub } = sb.auth.onAuthStateChange((_event, sess) => setSession(sess));
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  if (session === undefined) {
+    return <div className="loading-screen">Loading RANCH Bakery dashboard…</div>;
+  }
+  if (!session) {
+    return <React.Fragment><LoginScreen pushToast={pushAuthToast} /><Toasts toasts={authToasts} /></React.Fragment>;
+  }
+  return <Dashboard session={session} />;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<ErrorBoundary><App /></ErrorBoundary>);
+</script>
+</body>
+</html>
