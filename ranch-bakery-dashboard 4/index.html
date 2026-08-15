@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RANCH Bakery — Order Form</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --cream: #F5F0E8;
+    --cream-dark: #EDE6D6;
+    --brown-dark: #2C2416;
+    --brown-mid: #5C4A2A;
+    --brown-light: #8B7355;
+    --sage: #6B7C5C;
+    --border: #D4C5A9;
+    --error: #9B3A2A;
+    --success: #4A6741;
+  }
+
+  body {
+    background: var(--cream);
+    color: var(--brown-dark);
+    font-family: 'Lato', sans-serif;
+    font-weight: 300;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+
+  /* ── Header ── */
+  .header {
+    background: var(--cream);
+    border-bottom: 1px solid var(--border);
+    padding: 2rem 1rem 1.5rem;
+    text-align: center;
+  }
+
+  .logo-circle {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    border: 2px solid var(--brown-mid);
+    margin: 0 auto 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: var(--cream);
+  }
+
+  .logo-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+
+  .header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--brown-dark);
+    letter-spacing: 0.08em;
+  }
+
+  .header .tagline {
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--brown-light);
+    margin-top: 0.25rem;
+  }
+
+  /* ── Order window banner ── */
+  .window-banner {
+    max-width: 680px;
+    margin: 1.5rem auto 0;
+    padding: 0 1rem;
+  }
+
+  .banner {
+    border-radius: 4px;
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+    text-align: center;
+    letter-spacing: 0.03em;
+  }
+
+  .banner.open {
+    background: #EDF2E8;
+    border: 1px solid #B5C9A8;
+    color: var(--success);
+  }
+
+  .banner.closed {
+    background: #F5EDE8;
+    border: 1px solid #D4B5A8;
+    color: var(--error);
+  }
+
+  /* ── Main layout ── */
+  .main {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 2rem 1rem 4rem;
+  }
+
+  /* ── Section headers ── */
+  .section-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--brown-light);
+    margin: 2rem 0 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── Form fields ── */
+  .field { margin-bottom: 1.25rem; }
+
+  label {
+    display: block;
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--brown-mid);
+    margin-bottom: 0.4rem;
+    font-weight: 400;
+  }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="date"],
+  select,
+  textarea {
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    background: #FDFAF5;
+    color: var(--brown-dark);
+    font-family: 'Lato', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 300;
+    transition: border-color 0.2s;
+    appearance: none;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--brown-mid);
+  }
+
+  textarea { resize: vertical; min-height: 80px; }
+
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  /* ── Profile toggle ── */
+  .profile-toggle {
+    background: var(--cream-dark);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .profile-toggle p {
+    font-size: 0.85rem;
+    color: var(--brown-mid);
+    margin-bottom: 0.75rem;
+  }
+
+  .toggle-row {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .toggle-btn {
+    padding: 0.45rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    background: transparent;
+    color: var(--brown-mid);
+    font-family: 'Lato', sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .toggle-btn.active {
+    background: var(--brown-dark);
+    border-color: var(--brown-dark);
+    color: var(--cream);
+  }
+
+  /* ── Fulfillment toggle ── */
+  .fulfillment-row {
+    display: flex;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .fulfillment-btn {
+    flex: 1;
+    padding: 0.65rem;
+    border: none;
+    background: #FDFAF5;
+    color: var(--brown-mid);
+    font-family: 'Lato', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+  }
+
+  .fulfillment-btn:first-child { border-right: 1px solid var(--border); }
+
+  .fulfillment-btn.active {
+    background: var(--brown-dark);
+    color: var(--cream);
+  }
+
+  /* ── Products ── */
+  .product-group { margin-bottom: 1.5rem; }
+
+  .group-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    color: var(--brown-mid);
+    margin-bottom: 0.75rem;
+    font-style: italic;
+  }
+
+  .product-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    background: #FDFAF5;
+    margin-bottom: 0.5rem;
+    gap: 1rem;
+  }
+
+  .product-info { flex: 1; min-width: 0; }
+
+  .product-name {
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: var(--brown-dark);
+    margin-bottom: 0.1rem;
+  }
+
+  .product-desc {
+    font-size: 0.75rem;
+    color: var(--brown-light);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .product-price {
+    font-size: 0.85rem;
+    color: var(--brown-mid);
+    font-weight: 400;
+    white-space: nowrap;
+    margin-right: 0.75rem;
+  }
+
+  .qty-control {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .qty-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: var(--cream-dark);
+    color: var(--brown-mid);
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+    flex-shrink: 0;
+  }
+
+  .qty-btn:hover { background: var(--border); }
+
+  .qty-display {
+    width: 32px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--brown-dark);
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    height: 28px;
+    line-height: 28px;
+    background: #FDFAF5;
+  }
+
+  /* ── Order summary ── */
+  .summary-box {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--cream-dark);
+    padding: 1.25rem;
+    margin-top: 1.5rem;
+  }
+
+  .summary-line {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.875rem;
+    color: var(--brown-mid);
+    padding: 0.2rem 0;
+  }
+
+  .summary-total {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    color: var(--brown-dark);
+    border-top: 1px solid var(--border);
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+  }
+
+  /* ── Payment reminder ── */
+  .payment-note {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1rem 1.25rem;
+    margin-top: 1rem;
+    background: #FDFAF5;
+  }
+
+  .payment-note p {
+    font-size: 0.8rem;
+    color: var(--brown-mid);
+    letter-spacing: 0.03em;
+    margin-bottom: 0.5rem;
+  }
+
+  .payment-note .methods {
+    font-size: 0.85rem;
+    color: var(--brown-dark);
+  }
+
+  /* ── Submit ── */
+  .submit-btn {
+    width: 100%;
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: var(--brown-dark);
+    color: var(--cream);
+    border: none;
+    border-radius: 3px;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .submit-btn:hover:not(:disabled) { background: var(--brown-mid); }
+  .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ── Success screen ── */
+  .success-screen {
+    text-align: center;
+    padding: 4rem 2rem;
+    display: none;
+  }
+
+  .success-screen .check {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .success-screen h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.75rem;
+    margin-bottom: 0.75rem;
+    color: var(--brown-dark);
+  }
+
+  .success-screen p {
+    color: var(--brown-light);
+    font-size: 0.9rem;
+    max-width: 400px;
+    margin: 0 auto 1.5rem;
+    line-height: 1.7;
+  }
+
+  .new-order-btn {
+    padding: 0.65rem 1.5rem;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    background: transparent;
+    color: var(--brown-mid);
+    font-family: 'Lato', sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+  }
+
+  /* ── Error / helper ── */
+  .field-error { font-size: 0.75rem; color: var(--error); margin-top: 0.3rem; }
+  .helper { font-size: 0.75rem; color: var(--brown-light); margin-top: 0.3rem; }
+
+  .loading-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(245,240,232,0.85);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .loading-overlay.show { display: flex; }
+
+  .spinner {
+    width: 36px;
+    height: 36px;
+    border: 2px solid var(--border);
+    border-top-color: var(--brown-mid);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-overlay p {
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+    color: var(--brown-mid);
+  }
+
+  @media (max-width: 480px) {
+    .field-row { grid-template-columns: 1fr; }
+    .product-card { flex-wrap: wrap; }
+    .header h1 { font-size: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <p>Placing your order…</p>
+</div>
+
+
+<!-- Header -->
+<div class="header">
+  <div class="logo-circle">
+    <!-- Logo placeholder — replace src with hosted image URL -->
+    <img src="https://yhrqzgcvxzezaakduvey.supabase.co/storage/v1/object/sign/Logo/A0B51D47-EB70-4A8C-90F6-813390037FA2.PNG?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84ZDMwZjZmOC1lMTU4LTRhYjgtOTkwYi1lOWYxZWMyNjRlODUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJMb2dvL0EwQjUxRDQ3LUVCNzAtNEE4Qy05MEY2LTgxMzM5MDAzN0ZBMi5QTkciLCJzY29wZSI6ImRvd25sb2FkIiwiaWF0IjoxNzg1NjI4MzU4LCJleHAiOjI1OTM3ODU2MjgzNTh9.k30jht0qsn2WZUp8--dmr67QZhyqtlgnj-WJTHsqPxc" alt="RANCH Bakery logo">
+  </div>
+
+</div>
+
+<!-- Order window banner -->
+<div class="window-banner">
+  <div class="banner" id="windowBanner"></div>
+</div>
+
+<!-- Main form -->
+<div class="main" id="mainForm">
+
+  <!-- Profile section -->
+  <div class="section-label">Your info</div>
+
+  <div class="profile-toggle">
+    <p>Have an account? Sign in to pre-fill your details.</p>
+    <div class="toggle-row">
+      <button class="toggle-btn active" onclick="setMode('guest', this)">Order as guest</button>
+      <button class="toggle-btn" onclick="setMode('returning', this)">I have an account</button>
+      <button class="toggle-btn" onclick="setMode('new', this)">Create an account</button>
+    </div>
+  </div>
+
+  <div id="returningLogin" style="display:none">
+    <div class="field">
+      <label>Email address</label>
+      <input type="email" id="loginEmail" placeholder="your@email.com">
+    </div>
+    <button class="toggle-btn" style="margin-bottom:1rem" onclick="lookupCustomer()">Look up my account</button>
+    <div id="lookupMsg" style="font-size:0.8rem; color:var(--brown-light); margin-bottom:1rem;"></div>
+  </div>
+
+  <div id="infoFields">
+    <div class="field-row">
+      <div class="field">
+        <label>First & last name <span style="color:var(--error)">*</span></label>
+        <input type="text" id="customerName" placeholder="Jane Smith">
+      </div>
+      <div class="field">
+        <label>Phone number</label>
+        <input type="tel" id="customerPhone" placeholder="(850) 555-0100">
+      </div>
+    </div>
+    <div class="field">
+      <label>Email address <span style="color:var(--error)">*</span></label>
+      <input type="email" id="customerEmail" placeholder="your@email.com">
+      <p class="helper">You'll receive an order confirmation here.</p>
+    </div>
+    <div id="saveAccountField" style="display:none">
+      <label style="display:flex; align-items:center; gap:0.5rem; text-transform:none; letter-spacing:0; font-size:0.85rem; cursor:pointer;">
+        <input type="checkbox" id="saveAccount" checked style="width:auto">
+        Save my info for future orders
+      </label>
+    </div>
+  </div>
+
+  <!-- Fulfillment -->
+  <div class="section-label">Pickup or delivery</div>
+
+  <div class="fulfillment-row">
+    <button class="fulfillment-btn active" id="btnPickup" onclick="setFulfillment('pickup')">Pickup</button>
+    <button class="fulfillment-btn" id="btnDelivery" onclick="setFulfillment('delivery')">Delivery</button>
+  </div>
+
+  <div id="deliveryFields" style="display:none; margin-top:1rem;">
+    <div class="field">
+      <label>School <span style="color:var(--error)">*</span></label>
+      <select id="deliveryLocation">
+        <option value="">Select your school…</option>
+        <option value="San Ann Elem.">San Ann Elem.</option>
+        <option value="Cypress Creek MS/HS">Cypress Creek MS/HS</option>
+        <option value="Pasco High">Pasco High</option>
+        <option value="Wiregrass Elem.">Wiregrass Elem.</option>
+        <option value="Pasco Middle School">Pasco Middle School</option>
+      </select>
+      <p class="helper">Delivery is only available to teachers at these schools. Don't see yours? Please choose Pickup above instead.</p>
+    </div>
+  </div>
+
+  <div class="field" style="margin-top:1rem;">
+    <label>Requested Tuesday</label>
+    <input type="date" id="requestedDate" readonly style="background:#FDFAF5; cursor:default;">
+    <p class="helper">All orders are fulfilled on Tuesdays. Orders submitted after Friday at 8 PM are scheduled for the following Tuesday.</p>
+  </div>
+
+  <!-- Products -->
+  <div class="section-label">Your order</div>
+  <div id="productsContainer"><p style="color:var(--brown-light); font-size:0.85rem;">Loading menu…</p></div>
+
+  <!-- Summary -->
+  <div class="summary-box" id="summaryBox" style="display:none">
+    <div id="summaryLines"></div>
+    <div class="summary-total">
+      <span>Total</span>
+      <span id="summaryTotal">$0.00</span>
+    </div>
+  </div>
+
+  <!-- Payment note -->
+  <div class="payment-note">
+    <p>Payment is collected at pickup or delivery — no payment is taken online.</p>
+    <div class="methods">
+      Cash &nbsp;·&nbsp; Apple Pay <span style="color:var(--brown-light)">(850-459-1634)</span> &nbsp;·&nbsp; Venmo <span style="color:var(--brown-light)">@all-heart-and-hustle</span>
+    </div>
+  </div>
+
+  <!-- Notes -->
+  <div class="section-label">Anything else?</div>
+  <div class="field">
+    <label>Notes or special requests</label>
+    <textarea id="orderNotes" placeholder="Allergies, flavor preferences, anything we should know…"></textarea>
+  </div>
+
+  <button class="submit-btn" id="submitBtn" onclick="submitOrder()">Place my order</button>
+  <div id="formError" style="color:var(--error); font-size:0.8rem; margin-top:0.75rem; text-align:center;"></div>
+
+</div>
+
+<!-- Success screen -->
+<div class="main success-screen" id="successScreen">
+  <div class="check">🌾</div>
+  <h2>Order received!</h2>
+  <p id="successMsg">Thank you! We'll have your order ready for Tuesday. Payment is due at pickup or delivery.</p>
+  <button class="new-order-btn" onclick="resetForm()">Place another order</button>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://yhrqzgcvxzezaakduvey.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlocnF6Z2N2eHplemFha2R1dmV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2MDEyMjcsImV4cCI6MjEwMTE3NzIyN30.VHkW-LHKuBzhFwxDBs_PH7sWuhD-5lfO-1ngATbRn-k';
+const EMAILJS_PUBLIC_KEY = 'nScaz-MO41hv0WiXe';
+const EMAILJS_SERVICE_ID = 'service_bimnpul';
+const EMAILJS_TEMPLATE_ID = 'template_g4qzaun';
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+emailjs.init(EMAILJS_PUBLIC_KEY);
+
+let products = [];
+let quantities = {};
+let fulfillment = 'pickup';
+let mode = 'guest';
+let foundCustomer = null;
+
+const GROUPS = [
+  { label: 'Classic', match: p => p.description && p.description.startsWith('Classic'), photo: 'https://yhrqzgcvxzezaakduvey.supabase.co/storage/v1/object/sign/Photos/IMG_1273.jpg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84ZDMwZjZmOC1lMTU4LTRhYjgtOTkwYi1lOWYxZWMyNjRlODUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJQaG90b3MvSU1HXzEyNzMuanBnIiwic2NvcGUiOiJkb3dubG9hZCIsImlhdCI6MTc4NTYzMjEwNywiZXhwIjoyNTkzNzg1NjMyMTA3fQ.f5vRYFVxI2Axe6IWSf_xf50BYN5nj1GvLu16Z9576lA' },
+  { label: 'Savory', match: p => p.description && p.description.startsWith('Savory'), photo: 'https://yhrqzgcvxzezaakduvey.supabase.co/storage/v1/object/sign/Photos/IMG_1265.jpg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84ZDMwZjZmOC1lMTU4LTRhYjgtOTkwYi1lOWYxZWMyNjRlODUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJQaG90b3MvSU1HXzEyNjUuanBnIiwic2NvcGUiOiJkb3dubG9hZCIsImlhdCI6MTc4NTYzMjA5MSwiZXhwIjoyNTkzNzg1NjMyMDkxfQ.kPfmkyQvWry9N81SpttAIwhIUZOGyCXy8DnfovnmtoA' },
+  { label: 'Sweet', match: p => p.description && p.description.startsWith('Sweet'), photo: null },
+  { label: 'Personal Size', match: p => p.description && p.description.startsWith('Personal'), photo: null },
+  { label: 'Gone Rogue', match: p => p.description && p.description.startsWith('Gone Rogue'), photo: 'https://yhrqzgcvxzezaakduvey.supabase.co/storage/v1/object/sign/Photos/IMG_1264.jpg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84ZDMwZjZmOC1lMTU4LTRhYjgtOTkwYi1lOWYxZWMyNjRlODUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJQaG90b3MvSU1HXzEyNjQuanBnIiwic2NvcGUiOiJkb3dubG9hZCIsImlhdCI6MTc4NTYzMjA2OSwiZXhwIjoyNTkzNzg1NjMyMDY5fQ.pQh7pRMhHpViommPE5lm8Uh61ZyWVWfa03efybQibFo' },
+];
+
+// ── Order window logic ──
+// Always open. Mirrors the DB trigger (compute_order_delivery_date): the
+// cutoff for a given Tuesday's batch is the Friday before it at 8pm. If
+// "now" is past that cutoff, the order rolls to the following Tuesday.
+function nextTuesdayFrom(d) {
+  const dt = new Date(d);
+  dt.setHours(0, 0, 0, 0);
+  const day = dt.getDay(); // Tue = 2
+  const diff = (2 - day + 7) % 7;
+  dt.setDate(dt.getDate() + diff);
+  return dt;
+}
+
+function getDeliveryTuesday() {
+  const now = new Date();
+  const tuesday = nextTuesdayFrom(now);
+  const cutoff = new Date(tuesday);
+  cutoff.setDate(cutoff.getDate() - 4); // Friday before
+  cutoff.setHours(20, 0, 0, 0);
+  const pastCutoff = now > cutoff;
+  if (pastCutoff) tuesday.setDate(tuesday.getDate() + 7);
+  return { tuesday, pastCutoff };
+}
+
+function setupOrderWindow() {
+  const banner = document.getElementById('windowBanner');
+  const { tuesday, pastCutoff } = getDeliveryTuesday();
+  const tuesdayStr = tuesday.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+  const y = tuesday.getFullYear();
+  const m = String(tuesday.getMonth() + 1).padStart(2, '0');
+  const d = String(tuesday.getDate()).padStart(2, '0');
+  document.getElementById('requestedDate').value = `${y}-${m}-${d}`;
+
+  banner.className = 'banner open';
+  if (pastCutoff) {
+    banner.textContent = `Orders for this Tuesday are closed — your order will be fulfilled ${tuesdayStr}. We're always open!`;
+  } else {
+    banner.textContent = `Orders close Friday at 8 PM · Next fulfillment: ${tuesdayStr}`;
+  }
+}
+
+// ── Products ──
+async function loadProducts() {
+  const { data, error } = await sb.from('products').select('*').order('id');
+  if (error || !data) { document.getElementById('productsContainer').innerHTML = '<p style="color:var(--error)">Could not load menu. Please refresh.</p>'; return; }
+  products = data;
+  products.forEach(p => quantities[p.id] = 0);
+  renderProducts();
+}
+
+function renderProducts() {
+  const container = document.getElementById('productsContainer');
+  container.innerHTML = '';
+  GROUPS.forEach(group => {
+    const grouped = products.filter(group.match);
+    if (!grouped.length) return;
+    const div = document.createElement('div');
+    div.className = 'product-group';
+    div.innerHTML = `<p class="group-title">${group.label}</p>`;
+    grouped.forEach(p => {
+      div.innerHTML += `
+        <div class="product-card">
+          <div class="product-info">
+            <div class="product-name">${p.name}</div>
+            <div class="product-desc">${p.description || ''}</div>
+          </div>
+          <span class="product-price">$${parseFloat(p.base_price).toFixed(2)}</span>
+          <div class="qty-control">
+            <button class="qty-btn" onclick="changeQty(${p.id}, -1)">−</button>
+            <div class="qty-display" id="qty-${p.id}">0</div>
+            <button class="qty-btn" onclick="changeQty(${p.id}, 1)">+</button>
+          </div>
+        </div>`;
+    });
+    container.appendChild(div);
+  });
+}
+
+function changeQty(productId, delta) {
+  quantities[productId] = Math.max(0, (quantities[productId] || 0) + delta);
+  document.getElementById(`qty-${productId}`).textContent = quantities[productId];
+  updateSummary();
+}
+
+function updateSummary() {
+  const lines = products.filter(p => quantities[p.id] > 0);
+  const box = document.getElementById('summaryBox');
+  if (!lines.length) { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  let total = 0;
+  let html = '';
+  lines.forEach(p => {
+    const sub = quantities[p.id] * parseFloat(p.base_price);
+    total += sub;
+    html += `<div class="summary-line"><span>${p.name} × ${quantities[p.id]}</span><span>$${sub.toFixed(2)}</span></div>`;
+  });
+  document.getElementById('summaryLines').innerHTML = html;
+  document.getElementById('summaryTotal').textContent = `$${total.toFixed(2)}`;
+}
+
+function getTotal() {
+  return products.reduce((sum, p) => sum + (quantities[p.id] || 0) * parseFloat(p.base_price), 0);
+}
+
+// ── Profile modes ──
+function setMode(m, btn) {
+  mode = m;
+  document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  document.getElementById('returningLogin').style.display = m === 'returning' ? 'block' : 'none';
+  document.getElementById('infoFields').style.display = m === 'returning' && !foundCustomer ? 'none' : 'block';
+  document.getElementById('saveAccountField').style.display = m === 'new' ? 'block' : 'none';
+  if (m !== 'returning') { foundCustomer = null; clearFields(); }
+}
+
+function clearFields() {
+  ['customerName','customerEmail','customerPhone'].forEach(id => document.getElementById(id).value = '');
+}
+
+async function lookupCustomer() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const msg = document.getElementById('lookupMsg');
+  if (!email) { msg.textContent = 'Enter your email to look up your account.'; return; }
+  msg.textContent = 'Looking up…';
+  // Goes through a database function instead of a direct select — guests
+  // don't have read access to the customers table (that visibility is
+  // owner-only), so this is the only way a returning customer can look
+  // themselves up without exposing everyone else's data. Returns a table,
+  // so the result comes back as an array.
+  const { data } = await sb.rpc('lookup_customer_by_email', { p_email: email });
+  const found = data && data.length > 0 ? data[0] : null;
+  if (found) {
+    foundCustomer = found;
+    document.getElementById('customerName').value = found.name || '';
+    document.getElementById('customerEmail').value = found.email || '';
+    document.getElementById('customerPhone').value = found.phone || '';
+    if (found.fulfillment_preference) setFulfillment(found.fulfillment_preference);
+    if (found.delivery_location) document.getElementById('deliveryLocation').value = found.delivery_location;
+    document.getElementById('infoFields').style.display = 'block';
+    msg.textContent = `Welcome back, ${found.name.split(' ')[0]}!`;
+  } else {
+    msg.textContent = 'No account found. Try creating one, or order as a guest.';
+  }
+}
+
+// ── Fulfillment ──
+function setFulfillment(type) {
+  fulfillment = type;
+  document.getElementById('btnPickup').classList.toggle('active', type === 'pickup');
+  document.getElementById('btnDelivery').classList.toggle('active', type === 'delivery');
+  document.getElementById('deliveryFields').style.display = type === 'delivery' ? 'block' : 'none';
+}
+
+// ── Submit ──
+async function submitOrder() {
+  const name = document.getElementById('customerName').value.trim();
+  const email = document.getElementById('customerEmail').value.trim();
+  const phone = document.getElementById('customerPhone').value.trim();
+  const notes = document.getElementById('orderNotes').value.trim();
+  const deliveryLoc = document.getElementById('deliveryLocation').value.trim();
+  const requestedDate = document.getElementById('requestedDate').value;
+  const errEl = document.getElementById('formError');
+  errEl.textContent = '';
+
+  if (!name) { errEl.textContent = 'Please enter your name.'; return; }
+  if (!email || !email.includes('@')) { errEl.textContent = 'Please enter a valid email.'; return; }
+  if (fulfillment === 'delivery' && !deliveryLoc) { errEl.textContent = 'Please select your school.'; return; }
+
+  const orderItems = products.filter(p => quantities[p.id] > 0);
+  if (!orderItems.length) { errEl.textContent = 'Please add at least one item to your order.'; return; }
+
+  const total = getTotal();
+  document.getElementById('loadingOverlay').classList.add('show');
+  document.getElementById('submitBtn').disabled = true;
+
+  try {
+    // Upsert customer if creating account or returning
+    let customerId = foundCustomer ? foundCustomer.id : null;
+    if (mode === 'new' && document.getElementById('saveAccount').checked) {
+      // Same reasoning as lookupCustomer(): goes through a database function
+      // instead of a direct upsert, since guests no longer have raw
+      // insert/update rights on the customers table.
+      const { data: newId } = await sb.rpc('upsert_customer_self', {
+        p_name: name, p_email: email, p_phone: phone,
+        p_fulfillment_preference: fulfillment,
+        p_delivery_location: deliveryLoc || null
+      });
+      if (newId) customerId = newId;
+    }
+
+    // Insert order + items in one atomic call.
+    //
+    // This used to be a direct .insert([...]).select().single() on the
+    // orders table. That silently failed for every guest: Postgres checks
+    // RLS on the RETURNING clause too, and guests (the anon role) have no
+    // SELECT policy on orders — only the owner dashboard does. So even
+    // though the INSERT itself was allowed, Postgres couldn't let the
+    // guest read the row back to satisfy .select(), and rejected the
+    // whole insert with a row-level security error (which Supabase's API
+    // reports as 401 for anon requests). That's the "Something went
+    // wrong" every customer was hitting.
+    //
+    // The fix, matching the pattern already used for
+    // lookup_customer_by_email / upsert_customer_self: do the write
+    // inside a SECURITY DEFINER database function that bypasses RLS for
+    // the write and controls exactly what's handed back — instead of
+    // opening up SELECT access on orders to anyone with the public site
+    // key, which would let anyone read every customer's name, email,
+    // phone, and order history.
+    const itemsPayload = orderItems.map(p => ({
+      product_id: p.id,
+      product_name: p.name,
+      quantity: quantities[p.id],
+      unit_price: parseFloat(p.base_price)
+    }));
+
+    const { data: rpcResult, error: orderErr } = await sb.rpc('submit_guest_order', {
+      p_customer_id: customerId,
+      p_customer_name: name,
+      p_customer_email: email,
+      p_customer_phone: phone,
+      p_fulfillment: fulfillment,
+      p_delivery_location: deliveryLoc || null,
+      p_requested_date: requestedDate,
+      p_notes: notes,
+      p_items: itemsPayload
+    });
+
+    if (orderErr) throw orderErr;
+    const order = { id: rpcResult.order_id };
+
+    // High-value orders ($500+) are flagged automatically by a database
+    // trigger the moment the order row is inserted above — no client-side
+    // alert insert needed (and guests no longer have write access to the
+    // alerts table directly, so this would just fail silently anyway).
+
+    // Send email notification
+    const itemsList = orderItems.map(p => `${p.name} × ${quantities[p.id]} — $${(quantities[p.id] * parseFloat(p.base_price)).toFixed(2)}`).join('\n');
+    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      to_email: 'ranchmarq@gmail.com',
+      customer_name: name,
+      customer_email: email,
+      customer_phone: phone || 'Not provided',
+      fulfillment: fulfillment === 'pickup' ? 'Pickup' : `Delivery — ${deliveryLoc}`,
+      requested_date: requestedDate,
+      order_items: itemsList,
+      order_total: `$${total.toFixed(2)}`,
+      order_notes: notes || 'None',
+      order_id: order.id
+    }).catch(function(e) { console.warn('Email notification failed:', e); });
+
+    // Show success
+    document.getElementById('loadingOverlay').classList.remove('show');
+    document.getElementById('mainForm').style.display = 'none';
+    document.getElementById('successScreen').style.display = 'block';
+    document.getElementById('successMsg').textContent = `Thanks, ${name.split(' ')[0]}! Your order (#${order.id}) is confirmed for Tuesday. Payment of $${total.toFixed(2)} is due at ${fulfillment === 'pickup' ? 'pickup' : 'delivery'}.`;
+
+  } catch (err) {
+    document.getElementById('loadingOverlay').classList.remove('show');
+    document.getElementById('submitBtn').disabled = false;
+    errEl.textContent = 'Something went wrong — please try again or text us directly.';
+    console.error(err);
+  }
+}
+
+function resetForm() {
+  document.getElementById('mainForm').style.display = 'block';
+  document.getElementById('successScreen').style.display = 'none';
+  products.forEach(p => { quantities[p.id] = 0; const el = document.getElementById(`qty-${p.id}`); if (el) el.textContent = 0; });
+  updateSummary();
+  document.getElementById('submitBtn').disabled = false;
+  document.getElementById('formError').textContent = '';
+}
+
+// ── Init ──
+setupOrderWindow();
+loadProducts();
+</script>
+</body>
+</html>
